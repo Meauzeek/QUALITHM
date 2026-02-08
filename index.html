@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QUALITHM-UI-DEMO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      integrity="sha512-SnH5WK+bZxgPHs44uWix+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkR4j8R3Kf3f6Hf4dE4Yyq13dyY+nu6QmYVg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="top-hud glass">
+        <h1 class="brand">QUALITHM<span>UI DEMO</span></h1>
+        <label class="dev-toggle" for="devModeToggle">
+          <span>Dev Mode</span>
+          <input type="checkbox" id="devModeToggle" />
+          <i class="fa-solid fa-wrench"></i>
+        </label>
+      </header>
+
+      <main>
+        <section id="scene-main" class="scene active">
+          <article class="hero-card glass">
+            <div class="hero-copy">
+              <p class="sub">FADING WORLD PROTOCOL</p>
+              <h2>即将消逝的世界</h2>
+              <p id="juniLine">「我们会在噪声中，找到最后一束可被记录的光。」</p>
+              <button id="startBtn" class="primary-btn">
+                <i class="fa-solid fa-play"></i>
+                START
+              </button>
+            </div>
+            <figure class="juni-card">
+              <div class="juni-avatar">JUNI</div>
+              <figcaption>System Guide / Voice Unit</figcaption>
+            </figure>
+          </article>
+        </section>
+
+        <section id="scene-category" class="scene">
+          <div class="scene-title">
+            <h2>Category Select</h2>
+            <button id="backToMenu" class="ghost-btn"><i class="fa-solid fa-arrow-left"></i> Back</button>
+          </div>
+          <div id="categoryGrid" class="category-grid"></div>
+          <form id="customCategoryForm" class="glass inline-form">
+            <input id="newCategoryInput" type="text" placeholder="添加新分类，例如 Cytus II" maxlength="36" />
+            <button type="submit" class="ghost-btn"><i class="fa-solid fa-plus"></i> Add Category</button>
+          </form>
+        </section>
+
+        <section id="scene-music" class="scene">
+          <div class="music-layout">
+            <aside class="song-list-panel glass">
+              <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input id="searchInput" type="search" placeholder="按曲名/曲师搜索" />
+              </div>
+              <div id="activeCategoryText" class="active-category"></div>
+              <ul id="songList" class="song-list"></ul>
+            </aside>
+
+            <section class="song-detail-panel glass">
+              <div class="detail-head">
+                <button id="backToCategory" class="ghost-btn"><i class="fa-solid fa-layer-group"></i> Category</button>
+                <button id="editSongBtn" class="ghost-btn hidden"><i class="fa-solid fa-pen"></i> 编辑</button>
+              </div>
+              <div class="cover-wrap">
+                <img id="coverImage" alt="song cover" />
+                <div id="difficultyBadge" class="difficulty-badge">MET 14+</div>
+              </div>
+
+              <div class="meta-block">
+                <h3 id="songTitle">-</h3>
+                <p id="songArtist">Artist: -</p>
+                <p id="songBpm">BPM: -</p>
+              </div>
+
+              <div id="difficultyTabs" class="difficulty-tabs"></div>
+              <audio id="previewAudio" controls preload="none"></audio>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="editModal" class="glass">
+      <form id="editForm" method="dialog" class="modal-form">
+        <h3>编辑曲目</h3>
+        <div class="grid-2">
+          <label>曲名<input name="title" required /></label>
+          <label>曲师<input name="artist" required /></label>
+        </div>
+        <label>封面 URL<input name="cover" type="url" /></label>
+        <div class="grid-3">
+          <label>音频 URL<input name="audio" type="url" /></label>
+          <label>开始时间(s)<input name="previewStart" type="number" step="0.1" min="0" /></label>
+          <label>结束时间(s)<input name="previewEnd" type="number" step="0.1" min="0" /></label>
+        </div>
+
+        <fieldset>
+          <legend>难度定数（浮点）</legend>
+          <div class="grid-5">
+            <label>NUL<input name="nul" type="number" step="0.1" /></label>
+            <label>PHM<input name="phm" type="number" step="0.1" /></label>
+            <label>DEC<input name="dec" type="number" step="0.1" /></label>
+            <label>MET<input name="met" type="number" step="0.1" required /></label>
+            <label>HYP<input name="hyp" type="number" step="0.1" /></label>
+          </div>
+          <label class="inline-check"><input name="enableHyp" type="checkbox" /> 启用 HYPER 难度</label>
+          <label class="inline-check"><input name="enableWms" type="checkbox" /> 启用 WHIMSY 曲包条目</label>
+        </fieldset>
+
+        <label>HYPER 特殊曲名（可空）<input name="hypTitle" /></label>
+
+        <menu>
+          <button type="button" id="cancelEdit" class="ghost-btn">取消</button>
+          <button type="submit" class="primary-btn">保存</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="script.js"></script>
+  </body>
+</html>
