@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QUALITHM: ENDFIELD PROTOCOL V8</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Background System -->
+    <div class="bg-system">
+        <div class="bg-base"></div>
+        <div class="bg-lines-group">
+            <div class="line l1"></div>
+            <div class="line l2"></div>
+            <div class="line l3"></div>
+            <div class="line-cluster"></div>
+        </div>
+        <div class="bg-grid-overlay"></div>
+        <div class="bg-noise"></div>
+    </div>
+    
+    <!-- System UI -->
+    <div class="sys-corner tl" id="mainSysInfo">
+        <div class="sys-time" id="sysTime">00:00</div>
+        <div class="sys-ver">SYS: STABLE // V.8.2.0</div>
+    </div>
+    
+    <div class="sys-corner br-ctrl">
+        <input type="file" id="importFile" accept=".json" style="display: none;">
+        <button class="icon-btn" id="themeToggle" title="Theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
+        <button class="icon-btn" id="btnImport" title="Import JSON"><i class="fa-solid fa-file-import"></i></button>
+        <button class="icon-btn" id="dlDataBtn" title="Backup JSON"><i class="fa-solid fa-file-export"></i></button>
+        <button class="icon-btn" id="btnExportJS" title="Generate Script.js"><i class="fa-brands fa-js"></i></button>
+    </div>
+    
+    <div class="dev-badge" id="devToggle">
+        <i class="fa-solid fa-terminal"></i> <span>DEBUG</span>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app">
+        <!-- SCENE: MENU -->
+        <section id="scene-menu" class="scene active">
+            <div class="menu-layout-grid">
+                <div class="menu-content-area">
+                    <div class="brand-group">
+                        <h1 class="glitch-logo" data-text="QUALITHM">QUALITHM</h1>
+                        <div class="sep-bar"></div>
+                        <p class="sub-text">PROJECT FADING WORLD // RECONSTRUCTION</p>
+                    </div>
+                    <button class="btn-start-large" onclick="SceneManager.switch('category')">
+                        <span class="t-main">SYSTEM LINK</span>
+                        <span class="t-sub">ESTABLISH CONNECTION</span>
+                        <i class="fa-solid fa-caret-right icon-arrow"></i>
+                    </button>
+                </div>
+                <div class="menu-char-area">
+                    <div class="char-wrapper" id="charContainer">
+                        <img src="" id="heroImage" class="floating-char" alt="Juni">
+                        <div class="dialogue-box hidden" id="dialogueBox">
+                            <div class="d-line"></div>
+                            <p id="dialogueText">...</p>
+                        </div>
+                        <div class="char-controls dev-only hidden">
+                            <button onclick="Editor.editGlobalAssets('juni')"><i class="fa-solid fa-image"></i></button>
+                            <button onclick="Editor.editDialogues()"><i class="fa-solid fa-comment-dots"></i></button>
+                            <div class="sliders">
+                                <label>X <input type="range" min="-200" max="200" id="juniX" oninput="Juni.updateConfig()"></label>
+                                <label>Y <input type="range" min="-200" max="200" id="juniY" oninput="Juni.updateConfig()"></label>
+                                <label>S <input type="range" min="0.5" max="2.0" step="0.1" id="juniS" oninput="Juni.updateConfig()"></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCENE: CATEGORY -->
+        <section id="scene-category" class="scene">
+            <div class="nav-bar">
+                <button class="btn-tech-plain" onclick="SceneManager.switch('menu')">
+                    <i class="fa-solid fa-chevron-left"></i> TERMINATE
+                </button>
+                <div class="nav-info">
+                    <h2>ARCHIVE SELECTION</h2>
+                    <span id="catCount">LOADING...</span>
+                </div>
+                <div class="nav-actions">
+                     <button class="btn-tech-plain dev-only hidden" onclick="Editor.addCategory()">
+                        <i class="fa-solid fa-folder-plus"></i> NEW DB
+                    </button>
+                </div>
+            </div>
+            <div class="scroll-container">
+                <div class="category-track" id="categoryGrid"></div>
+            </div>
+        </section>
+
+        <!-- SCENE: MUSIC -->
+        <section id="scene-music" class="scene">
+            <div class="music-grid">
+                <div class="ctrl-row glass-panel">
+                    <button class="btn-tech-plain" onclick="SceneManager.switch('category')">
+                        <i class="fa-solid fa-chevron-left"></i> RETURN
+                    </button>
+                    <div class="search-bar">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="searchInput" placeholder="SEARCH...">
+                    </div>
+                    <div class="tool-group">
+                        <button class="icon-btn-plain" id="sortToggle" title="Sort">
+                            <i class="fa-solid fa-arrow-down-wide-short"></i>
+                        </button>
+                        <button class="icon-btn-plain" id="preciseToggle" title="Precise Rating">
+                            <i class="fa-solid fa-chart-simple"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="batch-bar hidden" id="batchBar">
+                    <span id="batchCount">0 SELECTED</span>
+                    <div class="batch-actions">
+                        <button class="btn-batch-del" onclick="BatchOps.delete()">DELETE</button>
+                        <button class="btn-batch-move" onclick="BatchOps.move()">MOVE</button>
+                        <button class="btn-batch-cancel" onclick="BatchOps.toggle(false)">CANCEL</button>
+                    </div>
+                </div>
+
+                <div class="workspace">
+                    <div class="list-zone">
+                        <div class="zone-header">
+                            <div class="cat-header-info">
+                                <span class="cat-label" id="listCatName">CATEGORY</span>
+                                <span class="cat-sub" id="listCatSub">SUBTITLE</span>
+                            </div>
+                            <div class="header-tools">
+                                <button class="btn-mini-tool dev-only hidden" onclick="BatchOps.toggle(true)">
+                                    <i class="fa-solid fa-list-check"></i>
+                                </button>
+                                <button class="btn-mini-add dev-only hidden" onclick="Editor.addSong()">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="list-scroll" id="songList"></div>
+                    </div>
+
+                    <div class="detail-zone" id="detailPanel">
+                        <div class="detail-bg" id="detailBg"></div>
+                        <div class="detail-content-layer">
+                            <div class="jacket-wrap tilted">
+                                <div class="jacket-box">
+                                    <img id="detailCover" class="filtered-img" src="" alt="Cover">
+                                    <div class="wms-stripe hidden" id="wmsStripe">WHIMSY</div>
+                                </div>
+                                <div class="rate-stamp" id="ratingStamp">
+                                    <div class="r-label" id="stampLabel">META</div>
+                                    <div class="r-val" id="stampVal">14+</div>
+                                </div>
+                            </div>
+
+                            <div class="meta-wrap">
+                                <h1 id="detailTitle">Title</h1>
+                                <h2 id="detailArtist">Artist</h2>
+                                <div class="diff-tabs" id="diffTabs"></div>
+                                <div class="info-stats">
+                                    <span>BPM <b id="detailBpm">0</b></span>
+                                </div>
+                                <div class="act-btns">
+                                    <button class="btn-play">INITIATE</button>
+                                    <button class="btn-edit dev-only hidden" id="btnEditSong"><i class="fa-solid fa-pen"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- SONG EDITOR MODAL -->
+    <div class="modal-layer" id="editModal">
+        <div class="modal-panel compact">
+            <div class="modal-top">
+                <h3>DATABASE EDITOR</h3>
+                <button onclick="Editor.close()" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="editor-grid">
+                    <div class="f-group span-6"><label>TITLE</label><input type="text" id="editTitle" required></div>
+                    <div class="f-group span-6"><label>ARTIST</label><input type="text" id="editArtist"></div>
+                    
+                    <div class="f-group span-9">
+                        <label>COVER URL</label>
+                        <div class="flex-row">
+                            <input type="text" id="editCover">
+                            <button type="button" class="btn-magic" onclick="Editor.magicSearch()" title="Auto Fetch (iTunes)"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+                            <button type="button" class="btn-web" onclick="Editor.webSearch()" title="Google Images"><i class="fa-solid fa-globe"></i></button>
+                        </div>
+                    </div>
+                    <div class="f-group span-3"><label>BPM</label><input type="number" id="editBpm"></div>
+                    
+                    <div class="f-group span-12"><label>SUBGROUP</label><input type="text" id="editSubgroup"></div>
+
+                    <div class="diff-container span-12">
+                        <div class="d-cell"><label class="l-nul">NUL</label><input type="number" step="0.1" id="valNUL"></div>
+                        <div class="d-cell"><label class="l-phm">PHM</label><input type="number" step="0.1" id="valPHM"></div>
+                        <div class="d-cell"><label class="l-dec">DEC</label><input type="number" step="0.1" id="valDEC"></div>
+                        <div class="d-cell"><label class="l-met">MET</label><input type="number" step="0.1" id="valMET"></div>
+                    </div>
+
+                    <div class="extra-row-box span-12">
+                        <div class="row-header">
+                            <label class="check-box"><input type="checkbox" id="checkHYP"><span>ENABLE HYPER</span></label>
+                        </div>
+                        <div class="extra-inputs">
+                            <input type="number" step="0.1" id="valHYP" placeholder="Lv" style="width: 60px;">
+                            <input type="text" id="titleHYP" placeholder="Alias">
+                            <input type="text" id="artistHYP" placeholder="Artist Override">
+                            <input type="text" id="coverHYP" placeholder="Exclusive Cover">
+                        </div>
+                    </div>
+
+                    <div class="extra-row-box span-12">
+                        <div class="row-header">
+                            <label class="check-box"><input type="checkbox" id="checkWMS"><span>ENABLE WHIMSY</span></label>
+                        </div>
+                        <div class="extra-inputs">
+                            <input type="text" id="valWMS" placeholder="Label" style="width: 60px;">
+                            <input type="text" id="aliasWMS" placeholder="Alias">
+                            <input type="text" id="artistWMS" placeholder="Artist Override">
+                            <input type="text" id="coverWMS" placeholder="Exclusive Cover">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-acts">
+                    <button type="button" class="btn-del" id="btnDelete">DELETE</button>
+                    <button type="submit" class="btn-save">SAVE DATA</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CATEGORY EDITOR MODAL (New) -->
+    <div class="modal-layer" id="catEditModal">
+        <div class="modal-panel compact">
+            <div class="modal-top">
+                <h3>CATEGORY EDITOR</h3>
+                <button onclick="CatEditor.close()" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="catForm">
+                <input type="hidden" id="oldCatName">
+                <div class="editor-grid">
+                    <div class="f-group span-6"><label>CATEGORY NAME</label><input type="text" id="catName" required></div>
+                    <div class="f-group span-6"><label>SUBTITLE</label><input type="text" id="catSub"></div>
+                    
+                    <div class="f-group span-12">
+                        <label>COVER IMAGE URL</label>
+                        <div class="flex-row">
+                            <input type="text" id="catCover">
+                            <button type="button" class="btn-magic" onclick="CatEditor.magicSearch()" title="Search Game Icon"><i class="fa-solid fa-gamepad"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="f-group span-12">
+                        <label>IMAGE FIT MODE</label>
+                        <div class="flex-row" style="margin-top:5px;">
+                            <label class="check-box"><input type="radio" name="catFit" value="cover" checked><span>Cover (Fill)</span></label>
+                            <label class="check-box" style="margin-left:20px;"><input type="radio" name="catFit" value="contain"><span>Contain (Fit)</span></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-acts">
+                    <button type="button" class="btn-del" onclick="CatEditor.delete()">DELETE PACK</button>
+                    <button type="submit" class="btn-save">SAVE PACK</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
