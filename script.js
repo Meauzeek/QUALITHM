@@ -45,6 +45,21 @@ const Utils = {
         a.download = 'qualia_info.json';
         a.click();
     },
+    bindPress(el, handler) {
+        if (!el || typeof handler !== 'function') return;
+        let suppressClick = false;
+
+        el.addEventListener('touchend', (e) => {
+            suppressClick = true;
+            handler(e);
+            setTimeout(() => { suppressClick = false; }, 350);
+        }, { passive: true });
+
+        el.addEventListener('click', (e) => {
+            if (suppressClick) return;
+            handler(e);
+        });
+    },
     glassColor(hex) { return `color-mix(in srgb, ${hex}, transparent 80%)`; }
 };
 
@@ -791,7 +806,9 @@ const SceneManager = {
 const Juni = {
     init() {
         this.applyConfig();
-        document.getElementById('charContainer').onclick = () => { if(!State.devMode) this.speak(); };
+        const triggerSpeak = () => { if(!State.devMode) this.speak(); };
+        Utils.bindPress(document.getElementById('charContainer'), triggerSpeak);
+        Utils.bindPress(document.getElementById('heroImage'), triggerSpeak);
         setInterval(() => { if (Math.random() > 0.7 && !State.devMode) this.speak(); }, 15000);
     },
     applyConfig() {
@@ -1221,15 +1238,7 @@ const Editor = {
     mode: 'song', targetId: null,
     init() {
         Juni.init();
-
-        const devToggle = document.getElementById('devToggle');
-        if (devToggle) {
-            devToggle.onclick = () => this.toggleDevMode();
-            devToggle.ontouchend = (e) => {
-                e.preventDefault();
-                this.toggleDevMode();
-            };
-        }
+        Utils.bindPress(document.getElementById('devToggle'), () => this.toggleDevMode());
 
         // Modal triggers
         document.getElementById('btnEditSong').onclick = () => this.openSongModal(State.currentSong);
@@ -1237,7 +1246,7 @@ const Editor = {
         document.getElementById('catForm').onsubmit = (e) => CatEditor.save(e);
         
         // Import/Export
-        document.getElementById('btnImport').onclick = () => document.getElementById('importFile').click();
+        Utils.bindPress(document.getElementById('btnImport'), () => document.getElementById('importFile').click());
         document.getElementById('importFile').onchange = (e) => {
             const file = e.target.files[0];
             if(!file) return;
@@ -1254,17 +1263,10 @@ const Editor = {
             reader.readAsText(file);
         };
         
-        const fullscreenBtn = document.getElementById('btnFullscreen');
-        if (fullscreenBtn) {
-            fullscreenBtn.onclick = () => this.toggleFullscreen();
-            fullscreenBtn.ontouchend = (e) => {
-                e.preventDefault();
-                this.toggleFullscreen();
-            };
-        }
+        Utils.bindPress(document.getElementById('btnFullscreen'), () => this.toggleFullscreen());
 
         // JS Export Logic
-        document.getElementById('btnExportJS').onclick = async () => {
+        const exportScriptHandler = async () => {
             try {
                 const response = await fetch('script.js');
                 if (!response.ok) throw new Error("Cannot fetch script.js");
@@ -1300,6 +1302,8 @@ const Editor = {
                 alert("Export failed: " + e.message + "\n(This feature requires running on a local server)");
             }
         };
+        document.getElementById('btnExportJS').onclick = exportScriptHandler;
+        Utils.bindPress(document.getElementById('btnExportJS'), exportScriptHandler);
 
         document.getElementById('btnDelete').onclick = () => this.delete();
         document.getElementById('checkHYP').onchange = (e) => {
@@ -1520,12 +1524,12 @@ const Editor = {
     close() { document.getElementById('editModal').classList.remove('open'); }
 };
 
-document.getElementById('themeToggle').onclick = Utils.toggleTheme;
-document.getElementById('dlDataBtn').onclick = Utils.exportData;
-document.getElementById('preciseToggle').onclick = function() {
+Utils.bindPress(document.getElementById('themeToggle'), Utils.toggleTheme);
+Utils.bindPress(document.getElementById('dlDataBtn'), Utils.exportData);
+Utils.bindPress(document.getElementById('preciseToggle'), function() {
     State.isPrecise = !State.isPrecise;
     this.classList.toggle('active', State.isPrecise);
     Render.songList(); Render.songDetail();
-};
+});
 document.getElementById('searchInput').addEventListener('input', () => Render.songList());
 window.addEventListener('DOMContentLoaded', () => { DB.init(); Editor.init(); SceneManager.switch('menu'); });
