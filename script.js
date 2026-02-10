@@ -42,10 +42,27 @@ const Utils = {
         const blob = new Blob([JSON.stringify({songs: State.songs, meta: State.meta}, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'qualithm_backup.json';
+        a.download = 'qualia_info.json';
         a.click();
     },
     glassColor(hex) { return `color-mix(in srgb, ${hex}, transparent 80%)`; }
+};
+
+const ViewportManager = {
+    setSizeVars() {
+        const vw = window.visualViewport?.width || window.innerWidth;
+        const vh = window.visualViewport?.height || window.innerHeight;
+        document.documentElement.style.setProperty('--app-vw', `${vw}px`);
+        document.documentElement.style.setProperty('--app-vh', `${vh}px`);
+    },
+    init() {
+        this.setSizeVars();
+        window.addEventListener('resize', () => this.setSizeVars(), { passive: true });
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.setSizeVars(), 200);
+        }, { passive: true });
+        window.visualViewport?.addEventListener('resize', () => this.setSizeVars(), { passive: true });
+    }
 };
 
 /* =========================================
@@ -683,29 +700,35 @@ const SEED_SONGS = [
     }
 ];
 
+const SEED_META = {
+    juniUrl: 'http://scpsandboxcn.wikidot.com/local--files/zampona/Juni_Kanban.png',
+    juniConfig: { x: 0, y: 22, s: 1.1 },
+    dialogues: [...CONFIG.defaultDialogues],
+    catOrder: [],
+    catMeta: {}
+};
+
+const DEFAULT_CAT_COVERS = {
+    'All Songs': 'https://images.igdb.com/igdb/image/upload/t_720p/co3d6d.jpg',
+    'Original': 'https://media.vgm.io/releases/87/36878/36878-1758238366.jpg',
+    'maimai DX': 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/55/71/b0/5571b048-d811-a14e-51ab-f4dae0477c14/AppIcon-0-0-1x_U007epad-0-1-0-85-220.png/512x512bb.jpg',
+    'CHUNITHM': 'https://chunithm.sega.jp/$site/images/ogimage.jpg',
+    'O.N.G.E.K.I.': 'https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/b3/16/f9/b316f90e-9252-4e00-0968-89c85c806b22/logo_youtube_music_2024_q4_color-0-1x_U007emarketing-0-0-0-7-0-0-0-85-220-0.png/512x512bb.jpg',
+    'VARIETY': 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/2c/50/00/2c5000d8-01ea-82df-767b-8d8a8e5a08ca/AppIcon-0-0-1x_U007emarketing-0-11-0-85-220.png/512x512bb.jpg'
+};
+
 const DB = {
     key: 'QUALITHM_DB_V8',
-    init() {
+    async init() {
         const raw = localStorage.getItem(this.key);
         if (raw) {
             const data = JSON.parse(raw);
             State.songs = data.songs || SEED_SONGS;
-            State.meta = { 
-                juniUrl: 'http://scpsandboxcn.wikidot.com/local--files/zampona/Juni_Kanban.png',
-                juniConfig: { x: 0, y: 22, s: 1.1 },
-                dialogues: [...CONFIG.defaultDialogues],
-                catOrder: [], catMeta: {}, 
-                ...data.meta 
-            };
+            State.meta = this.buildMeta(data.meta);
         } else {
-            State.songs = JSON.parse(JSON.stringify(SEED_SONGS));
-            State.meta = { 
-                juniUrl: 'https://placehold.co/500x800/transparent/333?text=Juni.PNG',
-                juniConfig: { x: 0, y: 0, s: 1 },
-                catMeta: {},
-                catOrder: [],
-                dialogues: [...CONFIG.defaultDialogues]
-            };
+            const imported = await this.loadLocalBootstrap();
+            State.songs = JSON.parse(JSON.stringify(imported?.songs || SEED_SONGS));
+            State.meta = this.buildMeta(imported?.meta);
             this.save();
         }
         this.refreshCategories();
@@ -713,6 +736,34 @@ const DB = {
             const d = new Date();
             document.getElementById('sysTime').innerText = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
         }, 1000);
+    },
+    buildMeta(meta = {}) {
+        const mergedMeta = {
+            ...JSON.parse(JSON.stringify(SEED_META)),
+            ...meta,
+            juniConfig: {
+                ...SEED_META.juniConfig,
+                ...(meta.juniConfig || {})
+            }
+        };
+
+        if (!mergedMeta.juniUrl || mergedMeta.juniUrl.includes('placehold.co')) {
+            mergedMeta.juniUrl = SEED_META.juniUrl;
+        }
+
+        return mergedMeta;
+    },
+    async loadLocalBootstrap() {
+        try {
+            const response = await fetch('./qualia_info.json', { cache: 'no-store' });
+            if (!response.ok) return null;
+            const data = await response.json();
+            if (!data || typeof data !== 'object') return null;
+            return data;
+        } catch (e) {
+            console.warn('qualia_info.json auto-import skipped:', e);
+            return null;
+        }
     },
     save() {
         localStorage.setItem(this.key, JSON.stringify({ songs: State.songs, meta: State.meta }));
@@ -831,7 +882,8 @@ const Render = {
             card.style.setProperty('--r', Utils.randomTilt());
             
             const meta = State.meta.catMeta[cat] || {};
-            const cover = meta.cover || `https://placehold.co/300x500/eee/333?text=${cat.substring(0,2)}`;
+            const fallbackSongCover = State.songs.find(s => s.category === cat)?.coverUrl;
+            const cover = meta.cover || DEFAULT_CAT_COVERS[cat] || fallbackSongCover || `https://placehold.co/300x500/eee/333?text=${cat.substring(0,2)}`;
             const isContain = meta.fit === 'contain';
             
             card.innerHTML = `
@@ -860,11 +912,12 @@ const Render = {
         const list = document.getElementById('songList');
         const filter = document.getElementById('searchInput').value.toLowerCase();
         list.innerHTML = '';
-        document.getElementById('listCatName').innerText = State.currCat;
-        document.getElementById('listCatSub').innerText = State.meta.catMeta[State.currCat]?.sub || "";
+        const isFlatMode = State.sortMode === 'flat_alpha';
+        document.getElementById('listCatName').innerText = isFlatMode ? 'NO CATEGORY MODE' : State.currCat;
+        document.getElementById('listCatSub').innerText = isFlatMode ? 'ALL PACKS / TITLE A→Z' : (State.meta.catMeta[State.currCat]?.sub || "");
 
         let rawItems = State.songs.filter(s => {
-            if (State.currCat === 'All Songs') return true;
+            if (isFlatMode || State.currCat === 'All Songs') return true;
             if (State.currCat === 'WHIMSY') return s.difficulties.WMS !== undefined;
             return s.category === State.currCat;
         });
@@ -903,8 +956,23 @@ const Render = {
              displayItems.sort((a, b) => {
                 const sa = a.song.subgroup || 'ZZZ';
                 const sb = b.song.subgroup || 'ZZZ';
-                return sa.localeCompare(sb) || a.song.title.localeCompare(b.song.title);
+                const ca = a.song.category || '';
+                const cb = b.song.category || '';
+                const va = typeof a.val === 'string' ? 999 : Number(a.val || 0);
+                const vb = typeof b.val === 'string' ? 999 : Number(b.val || 0);
+
+                if (State.currCat === 'All Songs') {
+                    return ca.localeCompare(cb) || sa.localeCompare(sb) || va - vb || a.song.title.localeCompare(b.song.title);
+                }
+
+                return sa.localeCompare(sb) || va - vb || a.song.title.localeCompare(b.song.title);
              });
+        } else if (State.sortMode === 'flat_alpha') {
+            displayItems.sort((a, b) => {
+                const sa = a.song.subgroup || 'ZZZ';
+                const sb = b.song.subgroup || 'ZZZ';
+                return sa.localeCompare(sb) || a.song.title.localeCompare(b.song.title);
+            });
         } else {
             displayItems.sort((a, b) => {
                 let vA = (typeof a.val === 'string') ? 999 : a.val;
@@ -926,6 +994,12 @@ const Render = {
             } else if (State.sortMode === 'pack') {
                 headerText = song.category;
             } else if (State.sortMode === 'subgroup') {
+                if (State.currCat === 'All Songs') {
+                    headerText = `${song.category}: ${song.subgroup || 'OTHERS'}`;
+                } else {
+                    headerText = song.subgroup || 'OTHERS';
+                }
+            } else if (State.sortMode === 'flat_alpha') {
                 headerText = song.subgroup || 'OTHERS';
             }
 
@@ -1236,7 +1310,7 @@ const Editor = {
                 try {
                     const data = JSON.parse(ev.target.result);
                     if(data.songs) State.songs = data.songs;
-                    if(data.meta) State.meta = data.meta;
+                    if(data.meta) State.meta = DB.buildMeta(data.meta);
                     DB.save();
                     location.reload();
                 } catch(e) { alert("Invalid JSON"); }
@@ -1254,6 +1328,7 @@ const Editor = {
 
                 // Replace SEED_SONGS
                 const songsJson = JSON.stringify(State.songs, null, 4);
+                const metaJson = JSON.stringify(State.meta, null, 4);
                 // Regex to find: const SEED_SONGS = [ ... ];
                 // We use a simplified replacement assuming standard formatting
                 // Or easier: replace the whole block if we identify start/end
@@ -1263,13 +1338,16 @@ const Editor = {
                 
                 // Construct replacement string
                 const newSeedBlock = `const SEED_SONGS = ${songsJson};`;
+                const newMetaBlock = `const SEED_META = ${metaJson};`;
                 
                 // Use regex to replace the variable definition
                 // Matches: const SEED_SONGS = [ (anything until ];)
                 const regex = /const SEED_SONGS\s*=\s*\[[\s\S]*?\];/;
+                const metaRegex = /const SEED_META\s*=\s*[\s\S]*?;\n\nconst DB/;
                 
-                if (regex.test(jsContent)) {
+                if (regex.test(jsContent) && metaRegex.test(jsContent)) {
                     jsContent = jsContent.replace(regex, newSeedBlock);
+                    jsContent = jsContent.replace(metaRegex, `${newMetaBlock}\n\nconst DB`);
                     
                     // Download
                     const blob = new Blob([jsContent], { type: 'text/javascript' });
@@ -1278,7 +1356,7 @@ const Editor = {
                     a.download = 'script.js';
                     a.click();
                 } else {
-                    alert("Could not find SEED_SONGS block in script.js to replace.");
+                    alert("Could not find SEED_SONGS / SEED_META block in script.js to replace.");
                 }
             } catch (e) {
                 alert("Export failed: " + e.message + "\n(This feature requires running on a local server)");
@@ -1304,6 +1382,7 @@ const Editor = {
             if (State.sortMode === 'level_desc') State.sortMode = 'level_asc';
             else if (State.sortMode === 'level_asc') State.sortMode = 'pack';
             else if (State.sortMode === 'pack') State.sortMode = 'subgroup'; 
+            else if (State.sortMode === 'subgroup') State.sortMode = 'flat_alpha';
             else State.sortMode = 'level_desc';
             Render.songList();
         };
@@ -1466,4 +1545,9 @@ document.getElementById('preciseToggle').onclick = function() {
     Render.songList(); Render.songDetail();
 };
 document.getElementById('searchInput').addEventListener('input', () => Render.songList());
-window.addEventListener('DOMContentLoaded', () => { DB.init(); Editor.init(); SceneManager.switch('menu'); });
+window.addEventListener('DOMContentLoaded', async () => {
+    ViewportManager.init();
+    await DB.init();
+    Editor.init();
+    SceneManager.switch('menu');
+});

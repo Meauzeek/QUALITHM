@@ -472,3 +472,24 @@ button, .cat-card, .song-row, .d-tab {
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
 }
+
+/* 小屏手机横屏整体缩放（约 50%） */
+@media screen and (max-width: 1024px) and (orientation: landscape) and (pointer: coarse) {
+    body {
+        zoom: 0.5;
+        width: calc(var(--app-vw) * 2);
+        height: calc(var(--app-vh) * 2);
+    }
+}
+
+/* Safari/iOS 对 zoom 支持较弱时的兜底 */
+@supports not (zoom: 1) {
+    @media screen and (max-width: 1024px) and (orientation: landscape) and (pointer: coarse) {
+        body {
+            transform: scale(0.5);
+            transform-origin: top left;
+            width: calc(var(--app-vw) * 2);
+            height: calc(var(--app-vh) * 2);
+        }
+    }
+}
