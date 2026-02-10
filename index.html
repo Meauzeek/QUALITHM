@@ -2,13 +2,25 @@
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- 关键修改：添加 viewport-fit=cover 和禁止缩放，解决“画面过大”问题 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>QUALITHM: ENDFIELD PROTOCOL V8</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+    <!-- 新增：竖屏提示遮罩 -->
+    <div id="portrait-overlay">
+        <div class="overlay-content">
+            <i class="fa-solid fa-mobile-screen-button fa-rotate-270"></i>
+            <h2>PLEASE ROTATE DEVICE</h2>
+            <p>Landscape Mode Required</p>
+        </div>
+    </div>
 
     <!-- Background System -->
     <div class="bg-system">
@@ -20,21 +32,19 @@
             <div class="line-cluster"></div>
         </div>
         <div class="bg-grid-overlay"></div>
-        <div class="bg-noise"></div>
     </div>
     
     <!-- System UI -->
     <div class="sys-corner tl" id="mainSysInfo">
         <div class="sys-time" id="sysTime">00:00</div>
-        <div class="sys-ver">SYS: STABLE // V.8.2.0</div>
+        <div class="sys-ver">SYS: STABLE // V.8.2.1</div>
     </div>
     
     <div class="sys-corner br-ctrl">
         <input type="file" id="importFile" accept=".json" style="display: none;">
-        <button class="icon-btn" id="btnFullscreen" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
         <button class="icon-btn" id="themeToggle" title="Theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
         <button class="icon-btn" id="btnImport" title="Import JSON"><i class="fa-solid fa-file-import"></i></button>
-        <button class="icon-btn" id="dlDataBtn" title="Backup JSON"><i class="fa-solid fa-file-export"></i></button>
+        <button class="icon-btn" id="dlDataBtn" title="Export JSON"><i class="fa-solid fa-file-export"></i></button>
         <button class="icon-btn" id="btnExportJS" title="Generate Script.js"><i class="fa-brands fa-js"></i></button>
     </div>
     
@@ -248,7 +258,7 @@
         </div>
     </div>
 
-    <!-- CATEGORY EDITOR MODAL (New) -->
+    <!-- CATEGORY EDITOR MODAL -->
     <div class="modal-layer" id="catEditModal">
         <div class="modal-panel compact">
             <div class="modal-top">
@@ -285,6 +295,6 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
 </body>
 </html>
