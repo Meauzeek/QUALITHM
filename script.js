@@ -45,6 +45,21 @@ const Utils = {
         a.download = 'qualia_info.json';
         a.click();
     },
+    bindPress(el, handler) {
+        if (!el || typeof handler !== 'function') return;
+        let suppressClick = false;
+
+        el.addEventListener('touchend', (e) => {
+            suppressClick = true;
+            handler(e);
+            setTimeout(() => { suppressClick = false; }, 350);
+        }, { passive: true });
+
+        el.addEventListener('click', (e) => {
+            if (suppressClick) return;
+            handler(e);
+        });
+    },
     glassColor(hex) { return `color-mix(in srgb, ${hex}, transparent 80%)`; }
 };
 
@@ -791,7 +806,9 @@ const SceneManager = {
 const Juni = {
     init() {
         this.applyConfig();
-        document.getElementById('charContainer').onclick = () => { if(!State.devMode) this.speak(); };
+        const triggerSpeak = () => { if(!State.devMode) this.speak(); };
+        Utils.bindPress(document.getElementById('charContainer'), triggerSpeak);
+        Utils.bindPress(document.getElementById('heroImage'), triggerSpeak);
         setInterval(() => { if (Math.random() > 0.7 && !State.devMode) this.speak(); }, 15000);
     },
     applyConfig() {
@@ -915,8 +932,12 @@ const Render = {
              displayItems.sort((a, b) => {
                 const sa = a.song.subgroup || 'ZZZ';
                 const sb = b.song.subgroup || 'ZZZ';
-                return sa.localeCompare(sb) || a.song.title.localeCompare(b.song.title);
+                const vA = (typeof a.val === 'string') ? 999 : a.val;
+                const vB = (typeof b.val === 'string') ? 999 : b.val;
+                return sa.localeCompare(sb) || (vA - vB) || a.song.title.localeCompare(b.song.title);
              });
+        } else if (State.sortMode === 'alpha_flat') {
+            displayItems.sort((a, b) => a.song.title.localeCompare(b.song.title));
         } else {
             displayItems.sort((a, b) => {
                 let vA = (typeof a.val === 'string') ? 999 : a.val;
@@ -939,6 +960,8 @@ const Render = {
                 headerText = song.category;
             } else if (State.sortMode === 'subgroup') {
                 headerText = song.subgroup || 'OTHERS';
+            } else if (State.sortMode === 'alpha_flat') {
+                headerText = '';
             }
 
             if (!groups[headerText]) {
@@ -951,12 +974,14 @@ const Render = {
         groupOrder.forEach(headerText => {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'list-group';
-            
-            const header = document.createElement('div');
-            header.className = 'group-header';
-            header.innerHTML = `<span>${headerText}</span>`;
-            header.onclick = () => groupDiv.classList.toggle('collapsed');
-            groupDiv.appendChild(header);
+
+            if (State.sortMode !== 'alpha_flat') {
+                const header = document.createElement('div');
+                header.className = 'group-header';
+                header.innerHTML = `<span>${headerText}</span>`;
+                header.onclick = () => groupDiv.classList.toggle('collapsed');
+                groupDiv.appendChild(header);
+            }
 
             const contentDiv = document.createElement('div');
             contentDiv.className = 'group-content';
@@ -1221,17 +1246,7 @@ const Editor = {
     mode: 'song', targetId: null,
     init() {
         Juni.init();
-        document.getElementById('devToggle').onclick = () => {
-            State.devMode = !State.devMode;
-            document.getElementById('devToggle').classList.toggle('active', State.devMode);
-            const scene = document.querySelector('.scene.active').id;
-            if(scene === 'scene-menu') {
-                document.querySelector('.char-controls').classList.toggle('hidden', !State.devMode);
-                Juni.applyConfig();
-            }
-            if(scene === 'scene-category') Render.categoryGrid();
-            if(scene === 'scene-music') Render.songList();
-        };
+        Utils.bindPress(document.getElementById('devToggle'), () => this.toggleDevMode());
 
         // Modal triggers
         document.getElementById('btnEditSong').onclick = () => this.openSongModal(State.currentSong);
@@ -1239,7 +1254,7 @@ const Editor = {
         document.getElementById('catForm').onsubmit = (e) => CatEditor.save(e);
         
         // Import/Export
-        document.getElementById('btnImport').onclick = () => document.getElementById('importFile').click();
+        Utils.bindPress(document.getElementById('btnImport'), () => document.getElementById('importFile').click());
         document.getElementById('importFile').onchange = (e) => {
             const file = e.target.files[0];
             if(!file) return;
@@ -1256,16 +1271,10 @@ const Editor = {
             reader.readAsText(file);
         };
         
-        document.getElementById('btnFullscreen').onclick = () => {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => console.log("Fullscreen error:", err));
-            } else {
-                document.exitFullscreen();
-            }
-        };
+        Utils.bindPress(document.getElementById('btnFullscreen'), () => this.toggleFullscreen());
 
         // JS Export Logic
-        document.getElementById('btnExportJS').onclick = async () => {
+        const exportScriptHandler = async () => {
             try {
                 const response = await fetch('script.js');
                 if (!response.ok) throw new Error("Cannot fetch script.js");
@@ -1301,6 +1310,8 @@ const Editor = {
                 alert("Export failed: " + e.message + "\n(This feature requires running on a local server)");
             }
         };
+        document.getElementById('btnExportJS').onclick = exportScriptHandler;
+        Utils.bindPress(document.getElementById('btnExportJS'), exportScriptHandler);
 
         document.getElementById('btnDelete').onclick = () => this.delete();
         document.getElementById('checkHYP').onchange = (e) => {
@@ -1317,13 +1328,62 @@ const Editor = {
             document.getElementById('artistWMS').disabled = !enabled;
             document.getElementById('coverWMS').disabled = !enabled;
         };
-        document.getElementById('sortToggle').onclick = () => {
+        const sortToggleHandler = () => {
             if (State.sortMode === 'level_desc') State.sortMode = 'level_asc';
             else if (State.sortMode === 'level_asc') State.sortMode = 'pack';
             else if (State.sortMode === 'pack') State.sortMode = 'subgroup'; 
+            else if (State.sortMode === 'subgroup') State.sortMode = 'alpha_flat';
             else State.sortMode = 'level_desc';
             Render.songList();
         };
+        document.getElementById('sortToggle').onclick = sortToggleHandler;
+        Utils.bindPress(document.getElementById('sortToggle'), sortToggleHandler);
+    },
+    toggleDevMode() {
+        State.devMode = !State.devMode;
+        const devToggle = document.getElementById('devToggle');
+        if (devToggle) devToggle.classList.toggle('active', State.devMode);
+
+        const activeScene = document.querySelector('.scene.active');
+        const scene = activeScene ? activeScene.id : '';
+
+        if (scene === 'scene-menu') {
+            const controls = document.querySelector('.char-controls');
+            if (controls) controls.classList.toggle('hidden', !State.devMode);
+            Juni.applyConfig();
+        }
+        if (scene === 'scene-category') Render.categoryGrid();
+        if (scene === 'scene-music') Render.songList();
+    },
+    async toggleFullscreen() {
+        const doc = document;
+        const el = document.documentElement;
+        const isFullscreen = doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement;
+
+        try {
+            if (!isFullscreen) {
+                if (el.requestFullscreen) {
+                    await el.requestFullscreen({ navigationUI: 'hide' });
+                } else if (el.webkitRequestFullscreen) {
+                    el.webkitRequestFullscreen();
+                } else if (el.msRequestFullscreen) {
+                    el.msRequestFullscreen();
+                } else {
+                    document.body.classList.add('force-fullscreen');
+                }
+            } else if (doc.exitFullscreen) {
+                await doc.exitFullscreen();
+            } else if (doc.webkitExitFullscreen) {
+                doc.webkitExitFullscreen();
+            } else if (doc.msExitFullscreen) {
+                doc.msExitFullscreen();
+            } else {
+                document.body.classList.remove('force-fullscreen');
+            }
+        } catch (err) {
+            console.log('Fullscreen error:', err);
+            document.body.classList.toggle('force-fullscreen');
+        }
     },
     addCategory() {
         const name = prompt("New Category Name:");
@@ -1475,12 +1535,12 @@ const Editor = {
     close() { document.getElementById('editModal').classList.remove('open'); }
 };
 
-document.getElementById('themeToggle').onclick = Utils.toggleTheme;
-document.getElementById('dlDataBtn').onclick = Utils.exportData;
-document.getElementById('preciseToggle').onclick = function() {
+Utils.bindPress(document.getElementById('themeToggle'), Utils.toggleTheme);
+Utils.bindPress(document.getElementById('dlDataBtn'), Utils.exportData);
+Utils.bindPress(document.getElementById('preciseToggle'), function() {
     State.isPrecise = !State.isPrecise;
     this.classList.toggle('active', State.isPrecise);
     Render.songList(); Render.songDetail();
-};
+});
 document.getElementById('searchInput').addEventListener('input', () => Render.songList());
 window.addEventListener('DOMContentLoaded', () => { DB.init(); Editor.init(); SceneManager.switch('menu'); });

@@ -435,3 +435,13 @@ body[data-theme="dark"] .filtered-img {
     .extra-inputs { grid-template-columns: 1fr; }
     .diff-container { grid-template-columns: repeat(2, 1fr); }
 }
+
+
+/* Fullscreen fallback for mobile browsers with limited Fullscreen API support */
+body.force-fullscreen {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+    overflow: auto;
+}
