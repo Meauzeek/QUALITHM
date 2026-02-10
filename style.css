@@ -35,10 +35,15 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+:root {
+    --app-vw: 100vw;
+    --app-vh: 100vh;
+}
+
 body {
     background: var(--bg-base); color: var(--tx-main);
     font-family: 'Rajdhani', 'Noto Sans SC', sans-serif;
-    height: 100vh; width: 100vw; overflow: hidden;
+    height: var(--app-vh); width: var(--app-vw); overflow: hidden;
     transition: color 0.3s, background 0.3s;
 }
 
@@ -402,11 +407,12 @@ body[data-theme="dark"] .filtered-img {
 /* --- MOBILE & ORIENTATION FIXES --- */
 /* 强制固定视口，防止滚动和弹性效果导致的“放大” */
 html, body {
-    width: 100vw;
-    height: 100vh;
+    width: var(--app-vw);
+    height: var(--app-vh);
     overflow: hidden;
-    position: fixed; /* 关键：防止手机浏览器回弹 */
+    position: relative;
     inset: 0;
+    overscroll-behavior: none;
 }
 
 /* 竖屏提示层 */
@@ -465,4 +471,25 @@ button, .cat-card, .song-row, .d-tab {
 #app {
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+}
+
+/* 小屏手机横屏整体缩放（约 50%） */
+@media screen and (max-width: 1024px) and (orientation: landscape) and (pointer: coarse) {
+    body {
+        zoom: 0.5;
+        width: calc(var(--app-vw) * 2);
+        height: calc(var(--app-vh) * 2);
+    }
+}
+
+/* Safari/iOS 对 zoom 支持较弱时的兜底 */
+@supports not (zoom: 1) {
+    @media screen and (max-width: 1024px) and (orientation: landscape) and (pointer: coarse) {
+        body {
+            transform: scale(0.5);
+            transform-origin: top left;
+            width: calc(var(--app-vw) * 2);
+            height: calc(var(--app-vh) * 2);
+        }
+    }
 }
