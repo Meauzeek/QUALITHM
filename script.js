@@ -932,8 +932,12 @@ const Render = {
              displayItems.sort((a, b) => {
                 const sa = a.song.subgroup || 'ZZZ';
                 const sb = b.song.subgroup || 'ZZZ';
-                return sa.localeCompare(sb) || a.song.title.localeCompare(b.song.title);
+                const vA = (typeof a.val === 'string') ? 999 : a.val;
+                const vB = (typeof b.val === 'string') ? 999 : b.val;
+                return sa.localeCompare(sb) || (vA - vB) || a.song.title.localeCompare(b.song.title);
              });
+        } else if (State.sortMode === 'alpha_flat') {
+            displayItems.sort((a, b) => a.song.title.localeCompare(b.song.title));
         } else {
             displayItems.sort((a, b) => {
                 let vA = (typeof a.val === 'string') ? 999 : a.val;
@@ -956,6 +960,8 @@ const Render = {
                 headerText = song.category;
             } else if (State.sortMode === 'subgroup') {
                 headerText = song.subgroup || 'OTHERS';
+            } else if (State.sortMode === 'alpha_flat') {
+                headerText = '';
             }
 
             if (!groups[headerText]) {
@@ -968,12 +974,14 @@ const Render = {
         groupOrder.forEach(headerText => {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'list-group';
-            
-            const header = document.createElement('div');
-            header.className = 'group-header';
-            header.innerHTML = `<span>${headerText}</span>`;
-            header.onclick = () => groupDiv.classList.toggle('collapsed');
-            groupDiv.appendChild(header);
+
+            if (State.sortMode !== 'alpha_flat') {
+                const header = document.createElement('div');
+                header.className = 'group-header';
+                header.innerHTML = `<span>${headerText}</span>`;
+                header.onclick = () => groupDiv.classList.toggle('collapsed');
+                groupDiv.appendChild(header);
+            }
 
             const contentDiv = document.createElement('div');
             contentDiv.className = 'group-content';
@@ -1320,13 +1328,16 @@ const Editor = {
             document.getElementById('artistWMS').disabled = !enabled;
             document.getElementById('coverWMS').disabled = !enabled;
         };
-        document.getElementById('sortToggle').onclick = () => {
+        const sortToggleHandler = () => {
             if (State.sortMode === 'level_desc') State.sortMode = 'level_asc';
             else if (State.sortMode === 'level_asc') State.sortMode = 'pack';
             else if (State.sortMode === 'pack') State.sortMode = 'subgroup'; 
+            else if (State.sortMode === 'subgroup') State.sortMode = 'alpha_flat';
             else State.sortMode = 'level_desc';
             Render.songList();
         };
+        document.getElementById('sortToggle').onclick = sortToggleHandler;
+        Utils.bindPress(document.getElementById('sortToggle'), sortToggleHandler);
     },
     toggleDevMode() {
         State.devMode = !State.devMode;
