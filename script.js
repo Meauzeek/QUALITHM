@@ -42,27 +42,10 @@ const Utils = {
         const blob = new Blob([JSON.stringify({songs: State.songs, meta: State.meta}, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'qualia_info.json';
+        a.download = 'qualithm_backup.json';
         a.click();
     },
     glassColor(hex) { return `color-mix(in srgb, ${hex}, transparent 80%)`; }
-};
-
-const ViewportManager = {
-    setSizeVars() {
-        const vw = window.visualViewport?.width || window.innerWidth;
-        const vh = window.visualViewport?.height || window.innerHeight;
-        document.documentElement.style.setProperty('--app-vw', `${vw}px`);
-        document.documentElement.style.setProperty('--app-vh', `${vh}px`);
-    },
-    init() {
-        this.setSizeVars();
-        window.addEventListener('resize', () => this.setSizeVars(), { passive: true });
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => this.setSizeVars(), 200);
-        }, { passive: true });
-        window.visualViewport?.addEventListener('resize', () => this.setSizeVars(), { passive: true });
-    }
 };
 
 /* =========================================
@@ -700,26 +683,29 @@ const SEED_SONGS = [
     }
 ];
 
-const SEED_META = {
-    juniUrl: 'http://scpsandboxcn.wikidot.com/local--files/zampona/Juni_Kanban.png',
-    juniConfig: { x: 0, y: 22, s: 1.1 },
-    dialogues: [...CONFIG.defaultDialogues],
-    catOrder: [],
-    catMeta: {}
-};
-
 const DB = {
     key: 'QUALITHM_DB_V8',
-    async init() {
+    init() {
         const raw = localStorage.getItem(this.key);
         if (raw) {
             const data = JSON.parse(raw);
             State.songs = data.songs || SEED_SONGS;
-            State.meta = this.buildMeta(data.meta);
+            State.meta = { 
+                juniUrl: 'http://scpsandboxcn.wikidot.com/local--files/zampona/Juni_Kanban.png',
+                juniConfig: { x: 0, y: 22, s: 1.1 },
+                dialogues: [...CONFIG.defaultDialogues],
+                catOrder: [], catMeta: {}, 
+                ...data.meta 
+            };
         } else {
-            const imported = await this.loadLocalBootstrap();
-            State.songs = JSON.parse(JSON.stringify(imported?.songs || SEED_SONGS));
-            State.meta = this.buildMeta(imported?.meta);
+            State.songs = JSON.parse(JSON.stringify(SEED_SONGS));
+            State.meta = { 
+                juniUrl: 'https://placehold.co/500x800/transparent/333?text=Juni.PNG',
+                juniConfig: { x: 0, y: 0, s: 1 },
+                catMeta: {},
+                catOrder: [],
+                dialogues: [...CONFIG.defaultDialogues]
+            };
             this.save();
         }
         this.refreshCategories();
@@ -727,28 +713,6 @@ const DB = {
             const d = new Date();
             document.getElementById('sysTime').innerText = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
         }, 1000);
-    },
-    buildMeta(meta = {}) {
-        return {
-            ...JSON.parse(JSON.stringify(SEED_META)),
-            ...meta,
-            juniConfig: {
-                ...SEED_META.juniConfig,
-                ...(meta.juniConfig || {})
-            }
-        };
-    },
-    async loadLocalBootstrap() {
-        try {
-            const response = await fetch('./qualia_info.json', { cache: 'no-store' });
-            if (!response.ok) return null;
-            const data = await response.json();
-            if (!data || typeof data !== 'object') return null;
-            return data;
-        } catch (e) {
-            console.warn('qualia_info.json auto-import skipped:', e);
-            return null;
-        }
     },
     save() {
         localStorage.setItem(this.key, JSON.stringify({ songs: State.songs, meta: State.meta }));
@@ -1272,7 +1236,7 @@ const Editor = {
                 try {
                     const data = JSON.parse(ev.target.result);
                     if(data.songs) State.songs = data.songs;
-                    if(data.meta) State.meta = DB.buildMeta(data.meta);
+                    if(data.meta) State.meta = data.meta;
                     DB.save();
                     location.reload();
                 } catch(e) { alert("Invalid JSON"); }
@@ -1290,7 +1254,6 @@ const Editor = {
 
                 // Replace SEED_SONGS
                 const songsJson = JSON.stringify(State.songs, null, 4);
-                const metaJson = JSON.stringify(State.meta, null, 4);
                 // Regex to find: const SEED_SONGS = [ ... ];
                 // We use a simplified replacement assuming standard formatting
                 // Or easier: replace the whole block if we identify start/end
@@ -1300,16 +1263,13 @@ const Editor = {
                 
                 // Construct replacement string
                 const newSeedBlock = `const SEED_SONGS = ${songsJson};`;
-                const newMetaBlock = `const SEED_META = ${metaJson};`;
                 
                 // Use regex to replace the variable definition
                 // Matches: const SEED_SONGS = [ (anything until ];)
                 const regex = /const SEED_SONGS\s*=\s*\[[\s\S]*?\];/;
-                const metaRegex = /const SEED_META\s*=\s*[\s\S]*?;\n\nconst DB/;
                 
-                if (regex.test(jsContent) && metaRegex.test(jsContent)) {
+                if (regex.test(jsContent)) {
                     jsContent = jsContent.replace(regex, newSeedBlock);
-                    jsContent = jsContent.replace(metaRegex, `${newMetaBlock}\n\nconst DB`);
                     
                     // Download
                     const blob = new Blob([jsContent], { type: 'text/javascript' });
@@ -1318,7 +1278,7 @@ const Editor = {
                     a.download = 'script.js';
                     a.click();
                 } else {
-                    alert("Could not find SEED_SONGS / SEED_META block in script.js to replace.");
+                    alert("Could not find SEED_SONGS block in script.js to replace.");
                 }
             } catch (e) {
                 alert("Export failed: " + e.message + "\n(This feature requires running on a local server)");
@@ -1506,9 +1466,4 @@ document.getElementById('preciseToggle').onclick = function() {
     Render.songList(); Render.songDetail();
 };
 document.getElementById('searchInput').addEventListener('input', () => Render.songList());
-window.addEventListener('DOMContentLoaded', async () => {
-    ViewportManager.init();
-    await DB.init();
-    Editor.init();
-    SceneManager.switch('menu');
-});
+window.addEventListener('DOMContentLoaded', () => { DB.init(); Editor.init(); SceneManager.switch('menu'); });
