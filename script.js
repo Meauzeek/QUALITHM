@@ -42,7 +42,7 @@ const Utils = {
         const blob = new Blob([JSON.stringify({songs: State.songs, meta: State.meta}, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'qualithm_backup.json';
+        a.download = 'qualia_info.json';
         a.click();
     },
     glassColor(hex) { return `color-mix(in srgb, ${hex}, transparent 80%)`; }
@@ -683,40 +683,52 @@ const SEED_SONGS = [
     }
 ];
 
+const SEED_META = {
+    juniUrl: 'https://placehold.co/500x800/transparent/333?text=Juni.PNG',
+    juniConfig: { x: 0, y: 0, s: 1.0 },
+    catMeta: {},
+    catOrder: [],
+    dialogues: [...CONFIG.defaultDialogues]
+};
+
 const DB = {
     key: 'QUALITHM_DB_V8',
-    init() {
-        const raw = localStorage.getItem(this.key);
-        if (raw) {
-            const data = JSON.parse(raw);
-            State.songs = data.songs || SEED_SONGS;
-            State.meta = { 
-                juniUrl: 'http://scpsandboxcn.wikidot.com/local--files/zampona/Juni_Kanban.png',
-                juniConfig: { x: 0, y: 22, s: 1.1 },
-                dialogues: [...CONFIG.defaultDialogues],
-                catOrder: [], catMeta: {}, 
-                ...data.meta 
-            };
-        } else {
-            State.songs = JSON.parse(JSON.stringify(SEED_SONGS));
-            State.meta = { 
-                juniUrl: 'https://placehold.co/500x800/transparent/333?text=Juni.PNG',
-                juniConfig: { x: 0, y: 0, s: 1 },
-                catMeta: {},
-                catOrder: [],
-                dialogues: [...CONFIG.defaultDialogues]
-            };
-            this.save();
+    async init() {
+        try {
+            const res = await fetch('qualia_info.json?t=' + Date.now());
+            if (res.ok) {
+                const data = await res.json();
+                State.songs = data.songs || SEED_SONGS;
+                State.meta = data.meta || SEED_META;
+                this.save(false);
+            } else {
+                this.loadLocal();
+            }
+        } catch (e) {
+            this.loadLocal();
         }
+
         this.refreshCategories();
         setInterval(() => {
             const d = new Date();
             document.getElementById('sysTime').innerText = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
         }, 1000);
     },
-    save() {
+    loadLocal() {
+        const raw = localStorage.getItem(this.key);
+        if (raw) {
+            const data = JSON.parse(raw);
+            State.songs = data.songs || SEED_SONGS;
+            State.meta = { ...SEED_META, ...data.meta };
+        } else {
+            State.songs = JSON.parse(JSON.stringify(SEED_SONGS));
+            State.meta = JSON.parse(JSON.stringify(SEED_META));
+            this.save(false);
+        }
+    },
+    save(refresh = true) {
         localStorage.setItem(this.key, JSON.stringify({ songs: State.songs, meta: State.meta }));
-        this.refreshCategories();
+        if (refresh) this.refreshCategories();
     },
     refreshCategories() {
         const songCats = new Set(State.songs.map(s => s.category));
@@ -1244,42 +1256,47 @@ const Editor = {
             reader.readAsText(file);
         };
         
+        document.getElementById('btnFullscreen').onclick = () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.log("Fullscreen error:", err));
+            } else {
+                document.exitFullscreen();
+            }
+        };
+
         // JS Export Logic
         document.getElementById('btnExportJS').onclick = async () => {
             try {
-                // Fetch the current script.js content
                 const response = await fetch('script.js');
                 if (!response.ok) throw new Error("Cannot fetch script.js");
                 let jsContent = await response.text();
 
-                // Replace SEED_SONGS
                 const songsJson = JSON.stringify(State.songs, null, 4);
-                // Regex to find: const SEED_SONGS = [ ... ];
-                // We use a simplified replacement assuming standard formatting
-                // Or easier: replace the whole block if we identify start/end
-                
-                // Fallback approach: Create a new JS file string that overrides DB init
-                // But user wants "script.js". Let's try to string replace.
-                
-                // Construct replacement string
+                const metaJson = JSON.stringify(State.meta, null, 4);
+
                 const newSeedBlock = `const SEED_SONGS = ${songsJson};`;
-                
-                // Use regex to replace the variable definition
-                // Matches: const SEED_SONGS = [ (anything until ];)
-                const regex = /const SEED_SONGS\s*=\s*\[[\s\S]*?\];/;
-                
-                if (regex.test(jsContent)) {
-                    jsContent = jsContent.replace(regex, newSeedBlock);
-                    
-                    // Download
-                    const blob = new Blob([jsContent], { type: 'text/javascript' });
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = 'script.js';
-                    a.click();
+                const newMetaBlock = `const SEED_META = ${metaJson};`;
+
+                const regexSongs = /const SEED_SONGS\s*=\s*\[[\s\S]*?\];/;
+                const regexMeta = /const SEED_META\s*=\s*\{[\s\S]*?\};/;
+
+                if (regexSongs.test(jsContent)) {
+                    jsContent = jsContent.replace(regexSongs, newSeedBlock);
                 } else {
-                    alert("Could not find SEED_SONGS block in script.js to replace.");
+                    throw new Error("Could not find SEED_SONGS block to replace.");
                 }
+
+                if (regexMeta.test(jsContent)) {
+                    jsContent = jsContent.replace(regexMeta, newMetaBlock);
+                } else {
+                    jsContent = jsContent.replace(regexSongs, newSeedBlock + '\n\n' + newMetaBlock);
+                }
+
+                const blob = new Blob([jsContent], { type: 'text/javascript' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'script.js';
+                a.click();
             } catch (e) {
                 alert("Export failed: " + e.message + "\n(This feature requires running on a local server)");
             }
