@@ -42,23 +42,8 @@ const Utils = {
         const blob = new Blob([JSON.stringify({songs: State.songs, meta: State.meta}, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'qualia_info.json';
+        a.download = 'qualithm_backup.json';
         a.click();
-    },
-    bindPress(el, handler) {
-        if (!el || typeof handler !== 'function') return;
-        let suppressClick = false;
-
-        el.addEventListener('touchend', (e) => {
-            suppressClick = true;
-            handler(e);
-            setTimeout(() => { suppressClick = false; }, 350);
-        }, { passive: true });
-
-        el.addEventListener('click', (e) => {
-            if (suppressClick) return;
-            handler(e);
-        });
     },
     glassColor(hex) { return `color-mix(in srgb, ${hex}, transparent 80%)`; }
 };
@@ -698,52 +683,40 @@ const SEED_SONGS = [
     }
 ];
 
-const SEED_META = {
-    juniUrl: 'https://placehold.co/500x800/transparent/333?text=Juni.PNG',
-    juniConfig: { x: 0, y: 0, s: 1.0 },
-    catMeta: {},
-    catOrder: [],
-    dialogues: [...CONFIG.defaultDialogues]
-};
-
 const DB = {
     key: 'QUALITHM_DB_V8',
-    async init() {
-        try {
-            const res = await fetch('qualia_info.json?t=' + Date.now());
-            if (res.ok) {
-                const data = await res.json();
-                State.songs = data.songs || SEED_SONGS;
-                State.meta = data.meta || SEED_META;
-                this.save(false);
-            } else {
-                this.loadLocal();
-            }
-        } catch (e) {
-            this.loadLocal();
+    init() {
+        const raw = localStorage.getItem(this.key);
+        if (raw) {
+            const data = JSON.parse(raw);
+            State.songs = data.songs || SEED_SONGS;
+            State.meta = { 
+                juniUrl: 'http://scpsandboxcn.wikidot.com/local--files/zampona/Juni_Kanban.png',
+                juniConfig: { x: 0, y: 22, s: 1.1 },
+                dialogues: [...CONFIG.defaultDialogues],
+                catOrder: [], catMeta: {}, 
+                ...data.meta 
+            };
+        } else {
+            State.songs = JSON.parse(JSON.stringify(SEED_SONGS));
+            State.meta = { 
+                juniUrl: 'https://placehold.co/500x800/transparent/333?text=Juni.PNG',
+                juniConfig: { x: 0, y: 0, s: 1 },
+                catMeta: {},
+                catOrder: [],
+                dialogues: [...CONFIG.defaultDialogues]
+            };
+            this.save();
         }
-
         this.refreshCategories();
         setInterval(() => {
             const d = new Date();
             document.getElementById('sysTime').innerText = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
         }, 1000);
     },
-    loadLocal() {
-        const raw = localStorage.getItem(this.key);
-        if (raw) {
-            const data = JSON.parse(raw);
-            State.songs = data.songs || SEED_SONGS;
-            State.meta = { ...SEED_META, ...data.meta };
-        } else {
-            State.songs = JSON.parse(JSON.stringify(SEED_SONGS));
-            State.meta = JSON.parse(JSON.stringify(SEED_META));
-            this.save(false);
-        }
-    },
-    save(refresh = true) {
+    save() {
         localStorage.setItem(this.key, JSON.stringify({ songs: State.songs, meta: State.meta }));
-        if (refresh) this.refreshCategories();
+        this.refreshCategories();
     },
     refreshCategories() {
         const songCats = new Set(State.songs.map(s => s.category));
@@ -806,9 +779,7 @@ const SceneManager = {
 const Juni = {
     init() {
         this.applyConfig();
-        const triggerSpeak = () => { if(!State.devMode) this.speak(); };
-        Utils.bindPress(document.getElementById('charContainer'), triggerSpeak);
-        Utils.bindPress(document.getElementById('heroImage'), triggerSpeak);
+        document.getElementById('charContainer').onclick = () => { if(!State.devMode) this.speak(); };
         setInterval(() => { if (Math.random() > 0.7 && !State.devMode) this.speak(); }, 15000);
     },
     applyConfig() {
@@ -932,12 +903,8 @@ const Render = {
              displayItems.sort((a, b) => {
                 const sa = a.song.subgroup || 'ZZZ';
                 const sb = b.song.subgroup || 'ZZZ';
-                const vA = (typeof a.val === 'string') ? 999 : a.val;
-                const vB = (typeof b.val === 'string') ? 999 : b.val;
-                return sa.localeCompare(sb) || (vA - vB) || a.song.title.localeCompare(b.song.title);
+                return sa.localeCompare(sb) || a.song.title.localeCompare(b.song.title);
              });
-        } else if (State.sortMode === 'alpha_flat') {
-            displayItems.sort((a, b) => a.song.title.localeCompare(b.song.title));
         } else {
             displayItems.sort((a, b) => {
                 let vA = (typeof a.val === 'string') ? 999 : a.val;
@@ -960,8 +927,6 @@ const Render = {
                 headerText = song.category;
             } else if (State.sortMode === 'subgroup') {
                 headerText = song.subgroup || 'OTHERS';
-            } else if (State.sortMode === 'alpha_flat') {
-                headerText = '';
             }
 
             if (!groups[headerText]) {
@@ -974,14 +939,12 @@ const Render = {
         groupOrder.forEach(headerText => {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'list-group';
-
-            if (State.sortMode !== 'alpha_flat') {
-                const header = document.createElement('div');
-                header.className = 'group-header';
-                header.innerHTML = `<span>${headerText}</span>`;
-                header.onclick = () => groupDiv.classList.toggle('collapsed');
-                groupDiv.appendChild(header);
-            }
+            
+            const header = document.createElement('div');
+            header.className = 'group-header';
+            header.innerHTML = `<span>${headerText}</span>`;
+            header.onclick = () => groupDiv.classList.toggle('collapsed');
+            groupDiv.appendChild(header);
 
             const contentDiv = document.createElement('div');
             contentDiv.className = 'group-content';
@@ -1246,7 +1209,17 @@ const Editor = {
     mode: 'song', targetId: null,
     init() {
         Juni.init();
-        Utils.bindPress(document.getElementById('devToggle'), () => this.toggleDevMode());
+        document.getElementById('devToggle').onclick = () => {
+            State.devMode = !State.devMode;
+            document.getElementById('devToggle').classList.toggle('active', State.devMode);
+            const scene = document.querySelector('.scene.active').id;
+            if(scene === 'scene-menu') {
+                document.querySelector('.char-controls').classList.toggle('hidden', !State.devMode);
+                Juni.applyConfig();
+            }
+            if(scene === 'scene-category') Render.categoryGrid();
+            if(scene === 'scene-music') Render.songList();
+        };
 
         // Modal triggers
         document.getElementById('btnEditSong').onclick = () => this.openSongModal(State.currentSong);
@@ -1254,7 +1227,7 @@ const Editor = {
         document.getElementById('catForm').onsubmit = (e) => CatEditor.save(e);
         
         // Import/Export
-        Utils.bindPress(document.getElementById('btnImport'), () => document.getElementById('importFile').click());
+        document.getElementById('btnImport').onclick = () => document.getElementById('importFile').click();
         document.getElementById('importFile').onchange = (e) => {
             const file = e.target.files[0];
             if(!file) return;
@@ -1271,47 +1244,46 @@ const Editor = {
             reader.readAsText(file);
         };
         
-        Utils.bindPress(document.getElementById('btnFullscreen'), () => this.toggleFullscreen());
-
         // JS Export Logic
-        const exportScriptHandler = async () => {
+        document.getElementById('btnExportJS').onclick = async () => {
             try {
+                // Fetch the current script.js content
                 const response = await fetch('script.js');
                 if (!response.ok) throw new Error("Cannot fetch script.js");
                 let jsContent = await response.text();
 
+                // Replace SEED_SONGS
                 const songsJson = JSON.stringify(State.songs, null, 4);
-                const metaJson = JSON.stringify(State.meta, null, 4);
-
+                // Regex to find: const SEED_SONGS = [ ... ];
+                // We use a simplified replacement assuming standard formatting
+                // Or easier: replace the whole block if we identify start/end
+                
+                // Fallback approach: Create a new JS file string that overrides DB init
+                // But user wants "script.js". Let's try to string replace.
+                
+                // Construct replacement string
                 const newSeedBlock = `const SEED_SONGS = ${songsJson};`;
-                const newMetaBlock = `const SEED_META = ${metaJson};`;
-
-                const regexSongs = /const SEED_SONGS\s*=\s*\[[\s\S]*?\];/;
-                const regexMeta = /const SEED_META\s*=\s*\{[\s\S]*?\};/;
-
-                if (regexSongs.test(jsContent)) {
-                    jsContent = jsContent.replace(regexSongs, newSeedBlock);
+                
+                // Use regex to replace the variable definition
+                // Matches: const SEED_SONGS = [ (anything until ];)
+                const regex = /const SEED_SONGS\s*=\s*\[[\s\S]*?\];/;
+                
+                if (regex.test(jsContent)) {
+                    jsContent = jsContent.replace(regex, newSeedBlock);
+                    
+                    // Download
+                    const blob = new Blob([jsContent], { type: 'text/javascript' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'script.js';
+                    a.click();
                 } else {
-                    throw new Error("Could not find SEED_SONGS block to replace.");
+                    alert("Could not find SEED_SONGS block in script.js to replace.");
                 }
-
-                if (regexMeta.test(jsContent)) {
-                    jsContent = jsContent.replace(regexMeta, newMetaBlock);
-                } else {
-                    jsContent = jsContent.replace(regexSongs, newSeedBlock + '\n\n' + newMetaBlock);
-                }
-
-                const blob = new Blob([jsContent], { type: 'text/javascript' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'script.js';
-                a.click();
             } catch (e) {
                 alert("Export failed: " + e.message + "\n(This feature requires running on a local server)");
             }
         };
-        document.getElementById('btnExportJS').onclick = exportScriptHandler;
-        Utils.bindPress(document.getElementById('btnExportJS'), exportScriptHandler);
 
         document.getElementById('btnDelete').onclick = () => this.delete();
         document.getElementById('checkHYP').onchange = (e) => {
@@ -1328,62 +1300,13 @@ const Editor = {
             document.getElementById('artistWMS').disabled = !enabled;
             document.getElementById('coverWMS').disabled = !enabled;
         };
-        const sortToggleHandler = () => {
+        document.getElementById('sortToggle').onclick = () => {
             if (State.sortMode === 'level_desc') State.sortMode = 'level_asc';
             else if (State.sortMode === 'level_asc') State.sortMode = 'pack';
             else if (State.sortMode === 'pack') State.sortMode = 'subgroup'; 
-            else if (State.sortMode === 'subgroup') State.sortMode = 'alpha_flat';
             else State.sortMode = 'level_desc';
             Render.songList();
         };
-        document.getElementById('sortToggle').onclick = sortToggleHandler;
-        Utils.bindPress(document.getElementById('sortToggle'), sortToggleHandler);
-    },
-    toggleDevMode() {
-        State.devMode = !State.devMode;
-        const devToggle = document.getElementById('devToggle');
-        if (devToggle) devToggle.classList.toggle('active', State.devMode);
-
-        const activeScene = document.querySelector('.scene.active');
-        const scene = activeScene ? activeScene.id : '';
-
-        if (scene === 'scene-menu') {
-            const controls = document.querySelector('.char-controls');
-            if (controls) controls.classList.toggle('hidden', !State.devMode);
-            Juni.applyConfig();
-        }
-        if (scene === 'scene-category') Render.categoryGrid();
-        if (scene === 'scene-music') Render.songList();
-    },
-    async toggleFullscreen() {
-        const doc = document;
-        const el = document.documentElement;
-        const isFullscreen = doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement;
-
-        try {
-            if (!isFullscreen) {
-                if (el.requestFullscreen) {
-                    await el.requestFullscreen({ navigationUI: 'hide' });
-                } else if (el.webkitRequestFullscreen) {
-                    el.webkitRequestFullscreen();
-                } else if (el.msRequestFullscreen) {
-                    el.msRequestFullscreen();
-                } else {
-                    document.body.classList.add('force-fullscreen');
-                }
-            } else if (doc.exitFullscreen) {
-                await doc.exitFullscreen();
-            } else if (doc.webkitExitFullscreen) {
-                doc.webkitExitFullscreen();
-            } else if (doc.msExitFullscreen) {
-                doc.msExitFullscreen();
-            } else {
-                document.body.classList.remove('force-fullscreen');
-            }
-        } catch (err) {
-            console.log('Fullscreen error:', err);
-            document.body.classList.toggle('force-fullscreen');
-        }
     },
     addCategory() {
         const name = prompt("New Category Name:");
@@ -1535,12 +1458,12 @@ const Editor = {
     close() { document.getElementById('editModal').classList.remove('open'); }
 };
 
-Utils.bindPress(document.getElementById('themeToggle'), Utils.toggleTheme);
-Utils.bindPress(document.getElementById('dlDataBtn'), Utils.exportData);
-Utils.bindPress(document.getElementById('preciseToggle'), function() {
+document.getElementById('themeToggle').onclick = Utils.toggleTheme;
+document.getElementById('dlDataBtn').onclick = Utils.exportData;
+document.getElementById('preciseToggle').onclick = function() {
     State.isPrecise = !State.isPrecise;
     this.classList.toggle('active', State.isPrecise);
     Render.songList(); Render.songDetail();
-});
+};
 document.getElementById('searchInput').addEventListener('input', () => Render.songList());
 window.addEventListener('DOMContentLoaded', () => { DB.init(); Editor.init(); SceneManager.switch('menu'); });
