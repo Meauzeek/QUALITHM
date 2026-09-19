@@ -4,7 +4,7 @@
 const CONFIG = {
     colors: {
         NUL: '#ff7f50', PHM: '#d4af37', DEC: '#2e8b57',
-        MET: '#8a2be2', HYP: '#d500ff', WMS: '#888888'
+        MET: '#8a2be2', HYP: '#9270d6', WMS: '#888888'
     },
     labels: {
         NUL: 'NULL', PHM: 'PHANTOM', DEC: 'DECAY', 
@@ -20,18 +20,26 @@ const CONFIG = {
     ]
 };
 
+// Optional hard-coded pack art overrides. Empty by default so the configured
+// pack image or the first available song jacket becomes the fallback.
+const DEFAULT_CAT_COVERS = {};
+const CHART_KEYS = ['NUL', 'PHM', 'DEC', 'MET', 'HYP', 'WMS'];
+
 const Utils = {
+    escapeHTML: value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])),
     randomTilt: () => (Math.random() * 4 - 2).toFixed(2) + 'deg',
+    isBrowserAsset(url) {
+        const value = String(url || '').trim();
+        return Boolean(value) && !/^[a-z]:[\\/]/i.test(value) && !/^(?:javascript|vbscript|file):/i.test(value);
+    },
     formatRough(val) {
-        if (typeof val === 'string') return val;
-        if (val === 999) return 'WHIMSY'; 
+        if (typeof val === 'string') return Utils.escapeHTML(val);
         if (!val && val !== 0) return '-';
         const int = Math.floor(val);
         return (val - int) >= 0.5 ? `${int}<span class="plus-symbol">+</span>` : `${int}`;
     },
     formatPrecise: (val) => {
-        if (typeof val === 'string') return val;
-        if (val === 999) return '???';
+        if (typeof val === 'string') return Utils.escapeHTML(val);
         return (typeof val === 'number') ? val.toFixed(1) : (val || '-');
     },
     toggleTheme() {
@@ -72,764 +80,65 @@ const fillLowDiffs = (d) => ({
     NUL: 3.0, PHM: 7.0, DEC: 10.5, ...d
 });
 
-// Seed data
-const SEED_SONGS = [
-    {
-        "id": "m1",
-        "title": "Panopticon",
-        "artist": "Cybermiso",
-        "category": "maimai DX",
-        "subgroup": "PHASE I",
-        "bpm": 110,
-        "coverUrl": "https://i1.sndcdn.com/artworks-000341810658-de9jx3-t500x500.jpg",
-        "difficulties": {
-            "NUL": 4,
-            "MET": 14.4,
-            "HYP": 15.1,
-            "PHM": 8,
-            "DEC": 12.1
-        }
-    },
-    {
-        "id": "m2",
-        "title": "躯樹の墓守",
-        "artist": "隣の庭は青い(庭師+Aoi)",
-        "category": "maimai DX",
-        "subgroup": "PHASE II",
-        "bpm": 211,
-        "coverUrl": "https://static.wikia.nocookie.net/maimai/images/b/b0/202202103_mms_tgskeleton.png/revision/latest?cb=20220323162633&path-prefix=zh",
-        "difficulties": {
-            "MET": 15.7,
-            "NUL": 6,
-            "PHM": 11,
-            "DEC": 13.6,
-            "WMS": "墓"
-        }
-    },
-    {
-        "id": "m3",
-        "title": "raputa",
-        "artist": "sasakure.UK & TJ.hangneil",
-        "category": "maimai DX",
-        "subgroup": "PHASE II",
-        "bpm": 339,
-        "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/2f/d5/b9/2fd5b9b0-dd98-fd37-de0b-9fc48b076295/3617222440230_cover.png/600x600bb.jpg",
-        "difficulties": {
-            "MET": 15.8,
-            "NUL": 7.5,
-            "PHM": 10.4,
-            "DEC": 14,
-            "HYP": 16.1
-        }
-    },
-    {
-        "id": "m4",
-        "title": "sølips",
-        "artist": "rintaro soma",
-        "category": "maimai DX",
-        "subgroup": "PHASE II",
-        "bpm": 199,
-        "coverUrl": "https://i.namu.wiki/i/gvwQ7tGvRxoNNTWZwbbBgC2hC4UHIlzpl2nIpszFooQi-_Tb24mnZVu6BSDfSxKfN2GPuLMWEN0865dZUM1L_w.webp",
-        "difficulties": {
-            "MET": 14.9,
-            "HYP": 16.3,
-            "WMS": "我",
-            "NUL": 8.2,
-            "PHM": 11.5,
-            "DEC": 14
-        }
-    },
-    {
-        "id": "m5",
-        "title": "CYCLES",
-        "artist": "Masayoshi Minoshima feat. Ayakura Mei",
-        "category": "maimai DX",
-        "subgroup": "PHASE I",
-        "bpm": 135,
-        "coverUrl": "https://storage.moegirl.org.cn/moegirl/commons/9/9a/MaiSong_cycles.jpg",
-        "difficulties": {
-            "MET": 12.4,
-            "HYP": 14,
-            "NUL": 1,
-            "PHM": 6,
-            "DEC": 8.9
-        }
-    },
-    {
-        "id": "m6",
-        "title": "Caliburne ~Story of the Legendary sword~",
-        "artist": "Project Grimoire",
-        "category": "maimai DX",
-        "subgroup": "PHASE I",
-        "bpm": 190,
-        "coverUrl": "https://storage.moegirl.org.cn/moegirl/commons/f/f8/Maisong_caliburne.jpg",
-        "difficulties": {
-            "MET": 15.6,
-            "NUL": 3,
-            "PHM": 7,
-            "DEC": 12.9
-        }
-    },
-    {
-        "id": "m7",
-        "title": "AMAZING MIGHTYYYY!!!!",
-        "artist": "WAiKURO",
-        "category": "maimai DX",
-        "subgroup": "PHASE I",
-        "bpm": 185,
-        "coverUrl": "https://storage.moegirl.org.cn/moegirl/commons/d/da/Arcsong_amazing_mightyyyy.jpg",
-        "difficulties": {
-            "MET": 15.8,
-            "WMS": "耐",
-            "WMS_alias": "AMAZING MIGHTYYYY!!!! (ULT!MATE EXTENDED)",
-            "WMS_cover": "https://i1.sndcdn.com/artworks-NH8x3oHEZz6MIF6C-bA7q9A-t500x500.jpg",
-            "NUL": 6,
-            "PHM": 10.7,
-            "DEC": 13.7
-        }
-    },
-    {
-        "id": "c1",
-        "title": "TiamaT: F minor",
-        "hyperTitle": "TiamaT: F minor -Zeit Ende-",
-        "artist": "Team Grimoire",
-        "category": "CHUNITHM",
-        "subgroup": "PHASE I",
-        "bpm": 215,
-        "coverUrl": "https://silentblue.remywiki.com/images/thumb/a/ae/TiamaT-F_minor.png/300px-TiamaT-F_minor.png",
-        "difficulties": {
-            "MET": 15.5,
-            "HYP": 16,
-            "HYP_cover": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/c5/22/91/c5229155-e643-540c-bbfc-b257b17ceb38/4571164388946_cover.jpg/600x600bb.jpg",
-            "WMS": "狂",
-            "NUL": 7.5,
-            "PHM": 11.8,
-            "DEC": 13.7
-        }
-    },
-    {
-        "id": "c2",
-        "title": "白庭",
-        "artist": "くるぶっこちゃん",
-        "category": "CHUNITHM",
-        "subgroup": "PHASE I",
-        "bpm": 111,
-        "coverUrl": "https://i1.sndcdn.com/artworks-rZxbLuDuukWR9tvm-Ndy3MA-t500x500.jpg",
-        "difficulties": {
-            "MET": 13.8,
-            "NUL": 2,
-            "PHM": 7,
-            "DEC": 12.6
-        }
-    },
-    {
-        "id": "c3",
-        "title": "TECHNOPOLIS 2085",
-        "artist": "PRASTIK DANCEFLOOR",
-        "category": "CHUNITHM",
-        "subgroup": "PHASE I",
-        "bpm": 134,
-        "coverUrl": "https://sdvx.in/chunithm/06/jacket/06125.png",
-        "difficulties": {
-            "MET": 14.5,
-            "HYP": 15,
-            "NUL": 3,
-            "PHM": 7.5,
-            "DEC": 12.1,
-            "WMS": "招"
-        }
-    },
-    {
-        "id": "c4",
-        "title": "Everything Will Be One",
-        "artist": "void (Mournfinale)",
-        "category": "CHUNITHM",
-        "subgroup": "PHASE I",
-        "bpm": 170,
-        "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/49/0d/c8/490dc8db-bbcd-fee7-da34-98908e119f7c/4550712375133_cover.png/600x600bb.jpg",
-        "difficulties": {
-            "MET": 15.6,
-            "NUL": 5,
-            "PHM": 9,
-            "DEC": 13.8
-        }
-    },
-    {
-        "id": "c5",
-        "title": "macrocosmos",
-        "artist": "LeaF",
-        "category": "CHUNITHM",
-        "subgroup": "PHASE II",
-        "bpm": 42,
-        "coverUrl": "https://silentblue.remywiki.com/images/thumb/9/94/macrocosmos.png/300px-macrocosmos.png",
-        "difficulties": {
-            "MET": 15.8,
-            "NUL": 7,
-            "PHM": 11.2,
-            "DEC": 13.9
-        }
-    },
-    {
-        "id": "c6",
-        "title": "Scythe of Death",
-        "artist": "Masahiro \"Godspeed\" Aoki",
-        "category": "CHUNITHM",
-        "subgroup": "PHASE II",
-        "bpm": 130,
-        "coverUrl": "https://sdvx.in/chunithm/07/jacket/07183.png",
-        "difficulties": {
-            "MET": 14.9,
-            "HYP": 15.7,
-            "NUL": 6,
-            "PHM": 10.7,
-            "DEC": 13.9
-        }
-    },
-    {
-        "id": "c7",
-        "title": "The Metaverse -First story of the SeelischTact-",
-        "artist": "CHUNITHM",
-        "category": "CHUNITHM",
-        "subgroup": "PHASE II",
-        "bpm": 190,
-        "coverUrl": "https://silentblue.remywiki.com/images/f/fc/The_Metaverse_-First_story_of_the_SeelischTact-.png",
-        "difficulties": {
-            "MET": 16.2,
-            "NUL": 8.8,
-            "PHM": 12.2,
-            "DEC": 14.5
-        }
-    },
-    {
-        "id": "o1",
-        "title": "Apollo",
-        "artist": "ONGEKI",
-        "category": "O.N.G.E.K.I.",
-        "subgroup": "PHASE II",
-        "bpm": 339,
-        "coverUrl": "https://i.namu.wiki/i/u2kXibx_039EXVA4J_pu0sJfvEvdLfMt1JBRNzlLcZ6CiYTpG-3po1KE6Gfarsr-gAEucEJBN4x9niUwtRErvQ.webp",
-        "difficulties": {
-            "MET": 15.6,
-            "HYP": 16,
-            "NUL": 8.9,
-            "PHM": 13.1,
-            "DEC": 14.3
-        }
-    },
-    {
-        "id": "o2",
-        "title": "Opfer",
-        "hyperTitle": "Opfer ~有栖の生贄~",
-        "artist": "かねこちはる",
-        "category": "O.N.G.E.K.I.",
-        "subgroup": "PHASE II",
-        "bpm": 175,
-        "coverUrl": "https://i1.sndcdn.com/artworks-000620646406-g27zvu-t1080x1080.jpg",
-        "difficulties": {
-            "MET": 14.9,
-            "HYP": 15.7,
-            "HYP_cover": "https://i.ytimg.com/vi/PhP5SUm4agw/maxresdefault.jpg",
-            "NUL": 6,
-            "PHM": 11.6,
-            "DEC": 13.5
-        }
-    },
-    {
-        "id": "o3",
-        "title": "Event Horizon",
-        "artist": "5u5h1 feat. 三角 葵(CV:春野 杏)",
-        "category": "O.N.G.E.K.I.",
-        "subgroup": "PHASE I",
-        "bpm": 135,
-        "coverUrl": "https://sdvx.in/ongeki/04/jacket/04294.png",
-        "difficulties": {
-            "MET": 13.2,
-            "NUL": 2,
-            "PHM": 6,
-            "DEC": 8.7
-        }
-    },
-    {
-        "id": "o4",
-        "title": "FLUFFY FLASH",
-        "artist": "Kobaryo",
-        "category": "O.N.G.E.K.I.",
-        "subgroup": "PHASE I",
-        "bpm": 252,
-        "coverUrl": "https://i1.sndcdn.com/artworks-VkVg5BDGgVvhwab9-OYCzcA-t1080x1080.jpg",
-        "difficulties": {
-            "MET": 14.7,
-            "HYP": 15.5,
-            "HYP_cover": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/dc/ff/a3/dcffa398-10d7-8ea8-a56e-874132f0b283/859759618345_cover.png/600x600bb.jpg",
-            "NUL": 5,
-            "PHM": 9.1,
-            "DEC": 12.8
-        },
-        "hyperTitle": "FLUFFY FLASH (FLOWERING Version)"
-    },
-    {
-        "id": "o5",
-        "title": "Diamond Dust",
-        "artist": "Masahiro \"Godspeed\" Aoki",
-        "category": "O.N.G.E.K.I.",
-        "subgroup": "PHASE I",
-        "bpm": 200,
-        "coverUrl": "https://i.namu.wiki/i/eK7O6yXRyBpNH5Fqrehs_5daiUdHvAbvRWQLkJuxMX5AXvGskk2CFGdLhzhvXJqEqjqF_aSbznamcZOR9fYBeg.webp",
-        "difficulties": {
-            "MET": 15.4,
-            "NUL": 4,
-            "PHM": 8.4,
-            "DEC": 12.6
-        }
-    },
-    {
-        "id": "o6",
-        "title": "girls.exe",
-        "artist": "rintaro soma",
-        "category": "O.N.G.E.K.I.",
-        "subgroup": "PHASE II",
-        "bpm": 188,
-        "coverUrl": "https://sdvx.in/ongeki/05/jacket/05061.png",
-        "difficulties": {
-            "MET": 15.5,
-            "HYP": 16.1,
-            "NUL": 6,
-            "PHM": 10.9,
-            "DEC": 13.8
-        }
-    },
-    {
-        "id": "o7",
-        "title": "MeteorSnow",
-        "artist": "Azupiano",
-        "category": "O.N.G.E.K.I.",
-        "subgroup": "PHASE I",
-        "bpm": 220,
-        "coverUrl": "https://sdvx.in/ongeki/04/jacket/04253.png",
-        "difficulties": {
-            "MET": 15.8,
-            "NUL": 4,
-            "PHM": 9.6,
-            "DEC": 14.1
-        }
-    },
-    {
-        "id": "o8",
-        "title": "怨撃",
-        "artist": "Shinji Hosoe",
-        "category": "O.N.G.E.K.I.",
-        "subgroup": "PHASE II",
-        "bpm": 220,
-        "coverUrl": "https://i1.sndcdn.com/artworks-OZsCJs44H1B27JBK-JCvWLg-t1080x1080.jpg",
-        "difficulties": {
-            "MET": 14.4,
-            "HYP": 15.9,
-            "WMS": "招",
-            "NUL": 5,
-            "PHM": 9.9,
-            "DEC": 12.8,
-            "WMS_alias": "怨撃·真",
-            "WMS_cover": "https://cdn.gamerch.com/resize/eyJidWNrZXQiOiJnYW1lcmNoLWltZy1jb250ZW50cyIsImtleSI6Indpa2lcLzEzXC9lbnRyeVwvMTY1Njc1ODE3Ni5qcGciLCJlZGl0cyI6eyJyZXNpemUiOnsid2lkdGgiOjIwMCwiZml0IjoiY292ZXIifSwianBlZyI6eyJxdWFsaXR5Ijo4NX19fQ=="
-        }
-    },
-    {
-        "id": "a1",
-        "title": "Aegleseeker",
-        "artist": "Silentroom & Frums",
-        "category": "Arcaea",
-        "subgroup": "PHASE I",
-        "bpm": 234,
-        "coverUrl": "https://static.wikia.nocookie.net/maimai/images/9/9e/202303023_mms_aegleseeker.png/revision/latest?cb=20230423205124&path-prefix=zh",
-        "difficulties": {
-            "MET": 16,
-            "NUL": 7.5,
-            "PHM": 10.1,
-            "DEC": 13.9,
-            "WMS": "全",
-            "WMS_cover": "https://is1-ssl.mzstatic.com/image/thumb/Music116/v4/d7/dd/41/d7dd4141-1e0c-0fab-41e9-afc581ee3186/859758180157_cover.jpg/600x600bb.jpg",
-            "WMS_alias": "Aegleseeker (\"Afterworld\" Full Version)"
-        }
-    },
-    {
-        "id": "a2",
-        "title": "魔王 (World Ender)",
-        "artist": "sasakure.UK & TJ.hangneil",
-        "category": "Arcaea",
-        "subgroup": "PHASE II",
-        "bpm": 190,
-        "coverUrl": "https://wiki.arcaea.cn/images/thumb/4/43/Songs_worldender.jpg/256px-Songs_worldender.jpg",
-        "difficulties": {
-            "MET": 13.8,
-            "HYP": 15.8,
-            "NUL": 6,
-            "PHM": 9.5,
-            "DEC": 12.3,
-            "HYP_cover": "https://is1-ssl.mzstatic.com/image/thumb/Music112/v4/f7/49/c2/f749c20e-94fe-0da8-03a7-46969fc69f7a/859758456252_cover.png/600x600bb.jpg"
-        },
-        "hyperTitle": "魔王"
-    },
-    {
-        "id": "a3",
-        "title": "蛍火の雪",
-        "artist": "ETIA.",
-        "category": "Arcaea",
-        "subgroup": "PHASE I",
-        "bpm": 159,
-        "coverUrl": "https://static.wikia.nocookie.net/iowiro/images/3/37/Hotaru.jpg/revision/latest?cb=20240112005334",
-        "difficulties": {
-            "MET": 13.3,
-            "NUL": 1,
-            "PHM": 5,
-            "DEC": 9.6
-        }
-    },
-    {
-        "id": "a4",
-        "title": "ultradiaxon-N3",
-        "artist": "nitro (lowiro)",
-        "category": "Arcaea",
-        "subgroup": "PHASE I",
-        "bpm": 150,
-        "coverUrl": "https://static.wikia.nocookie.net/iowiro/images/6/60/Ultradiaxon.jpg/revision/latest?cb=20240402012631",
-        "difficulties": {
-            "MET": 14.6,
-            "NUL": 4,
-            "PHM": 9.8,
-            "DEC": 12.4
-        }
-    },
-    {
-        "id": "a5",
-        "title": "To the Milky Way",
-        "artist": "黒魔",
-        "category": "Arcaea",
-        "subgroup": "PHASE I",
-        "bpm": 186,
-        "coverUrl": "https://static.wikia.nocookie.net/iowiro/images/0/0e/Tothemilkyway.jpg/revision/latest?cb=20230927211839",
-        "difficulties": {
-            "MET": 15.3,
-            "NUL": 5,
-            "PHM": 10.3,
-            "DEC": 12.7
-        }
-    },
-    {
-        "id": "a6",
-        "title": "ANDORXOR",
-        "artist": "Sobrem",
-        "category": "Arcaea",
-        "subgroup": "PHASE II",
-        "bpm": 148,
-        "coverUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRbXuf5SNNCdBTVPLO-ESGwN0K5zbZ919P0pg&s",
-        "difficulties": {
-            "MET": 14.8,
-            "HYP": 15.7,
-            "NUL": 4,
-            "PHM": 9.7,
-            "DEC": 12.8
-        }
-    },
-    {
-        "id": "a7",
-        "title": "Astral Quantization",
-        "artist": "Dj Grimoire",
-        "category": "Arcaea",
-        "subgroup": "PHASE II",
-        "bpm": 185,
-        "coverUrl": "https://static.wikia.nocookie.net/iowiro/images/7/70/Astralq.jpg/revision/latest?cb=20241121054106",
-        "difficulties": {
-            "MET": 15.4,
-            "WMS": "止",
-            "NUL": 6,
-            "PHM": 8.7,
-            "DEC": 13.6
-        }
-    },
-    {
-        "id": "a8",
-        "title": "多次元宇宙融合論",
-        "artist": "TAKIO feat つぐ",
-        "category": "Arcaea",
-        "subgroup": "PHASE II",
-        "bpm": 180,
-        "coverUrl": "https://p2.music.126.net/veU0hhNGHEg4_V-Ny6KhsA==/109951171525664321.jpg",
-        "difficulties": {
-            "MET": 15.7,
-            "NUL": 7,
-            "PHM": 10,
-            "DEC": 13.4,
-            "HYP": 16.1
-        }
-    },
-    {
-        "id": "w1",
-        "title": "Aleph-0",
-        "artist": "LeaF",
-        "category": "VARIETY",
-        "subgroup": "OTHERS",
-        "bpm": 250,
-        "coverUrl": "https://storage.moegirl.org.cn/moegirl/commons/4/43/Aleph0.jpg",
-        "difficulties": {
-            "WMS": "数",
-            "MET": 15,
-            "HYP": 15.9,
-            "NUL": 8.5,
-            "PHM": 12.5,
-            "DEC": 13.8
-        }
-    },
-    {
-        "NUL": 3,
-        "PHM": 7,
-        "DEC": 10.5,
-        "id": "6f1a00cd-4ce4-4f62-92eb-2f9a83e24b2a",
-        "title": "God is [In] a girl",
-        "artist": "nanoViDA feat. Juno",
-        "category": "Original",
-        "difficulties": {
-            "NUL": 7,
-            "PHM": 12.9,
-            "DEC": 14.5,
-            "MET": 15.4,
-            "HYP": 16.5,
-            "WMS": "墓"
-        },
-        "coverUrl": "N:\\桌面归档\\Picture\\Chugekimai\\G[In]G.jpg",
-        "bpm": 49,
-        "subgroup": ""
-    },
-    {
-        "NUL": 3,
-        "PHM": 7,
-        "DEC": 10.5,
-        "id": "3d9748d0-df91-4bc2-a53c-5cb575e18620",
-        "title": "再生不能",
-        "artist": "ろくろ feat.鹿乃",
-        "category": "CHUNITHM",
-        "difficulties": {
-            "NUL": 2,
-            "PHM": 5,
-            "DEC": 10.2,
-            "MET": 13.2,
-            "HYP": 14
-        },
-        "coverUrl": "https://i1.sndcdn.com/artworks-lWVTzQf6Oz2P7XNT-q6AqzQ-t1080x1080.jpg",
-        "bpm": 236,
-        "subgroup": "PHASE II"
-    },
-    {
-        "NUL": 3,
-        "PHM": 7,
-        "DEC": 10.5,
-        "id": "6101f682-5528-4355-b00d-a4c697cff4cc",
-        "title": "ヨミビトシラズ",
-        "artist": "Limonène (サノカモメ+月島春果)",
-        "category": "maimai DX",
-        "difficulties": {
-            "NUL": 3,
-            "PHM": 6,
-            "DEC": 10.3,
-            "MET": 13.9,
-            "HYP": 15,
-            "HYP_artist": "カモメサノエレクトリックオーケストラ include Limonène",
-            "HYP_cover": "https://silentblue.remywiki.com/images/thumb/e/ee/Ref-rain_%28for_7th_Heaven%29.png/1024px-Ref-rain_%28for_7th_Heaven%29.png"
-        },
-        "coverUrl": "https://i.namu.wiki/i/AacPAKAasQ2IxiP5l_2_J99sNHbo5ZNSFTtgVPIBra_xQsNIQBxupIHK6bKfUzWgqAkMK_kBghP0QV-qRqWzRA.webp",
-        "bpm": 188,
-        "subgroup": "PHASE II",
-        "hyperTitle": "Ref:rain (for 7th Heaven)"
-    },
-    {
-        "NUL": 3,
-        "PHM": 7,
-        "DEC": 10.5,
-        "id": "dd3818dd-89ee-4589-96b3-127e85a53bec",
-        "title": "驟雨の狭間",
-        "artist": "Silentroom",
-        "category": "VARIETY",
-        "difficulties": {
-            "NUL": 7.5,
-            "PHM": 11.9,
-            "DEC": 14.2,
-            "MET": 15.7,
-            "HYP": 15.6
-        },
-        "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music113/v4/aa/b6/25/aab625bd-dfd6-ab26-f05c-eba093312a22/859755527009_cover.jpg/600x600bb.jpg",
-        "bpm": null,
-        "subgroup": ""
-    },
-    {
-        "NUL": 3,
-        "PHM": 7,
-        "DEC": 10.5,
-        "id": "474d5c7c-1010-49b3-8e8e-7c877f9ce0ac",
-        "title": "XL TECHNO -More Dance Remix-",
-        "artist": "高田聡 (from PACA PACA PASSION SPECIAL)",
-        "category": "VARIETY",
-        "difficulties": {
-            "NUL": 2,
-            "PHM": 7,
-            "DEC": 14.5,
-            "MET": 14.4,
-            "HYP": 15.2
-        },
-        "coverUrl": "https://silentblue.remywiki.com/images/6/62/XL_TECHNO_-More_Dance_Remix-.png",
-        "bpm": 150,
-        "subgroup": "PACA PACA PASSION",
-        "hyperTitle": "XL TECHNO -More Dance Remix- (Full Version)"
-    },
-    {
-        "NUL": 3,
-        "PHM": 7,
-        "DEC": 10.5,
-        "id": "16150cf2-714c-42aa-a075-f02da9b1d426",
-        "title": "《髓星》 -Doppelkonzert für Violine und Violoncello Nr. 7, Markstern-",
-        "artist": "削除 vs. virkato",
-        "category": "Original",
-        "difficulties": {
-            "NUL": 9,
-            "PHM": 13.2,
-            "DEC": 15,
-            "MET": 16,
-            "HYP": 16.4,
-            "WMS": "奏"
-        },
-        "coverUrl": "N:\\Edge Download\\已生成图像 (43).png",
-        "bpm": 184,
-        "subgroup": ""
-    },
-    {
-        "NUL": 3,
-        "PHM": 7,
-        "DEC": 10.5,
-        "id": "3ec6735b-5964-4f65-ad8e-33ad68a7c3dc",
-        "title": "neu",
-        "artist": "少年ラジオ",
-        "category": "VARIETY",
-        "difficulties": {
-            "NUL": 6,
-            "PHM": 12.8,
-            "DEC": 14.3,
-            "MET": 15.5,
-            "HYP": 16,
-            "WMS": "終"
-        },
-        "coverUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwAy52CIg4AsnQBLZvjiC_oCdWclkMt7NEdQ&s",
-        "bpm": 95,
-        "subgroup": "BEMANI"
-    },
-    {
-        "NUL": 3,
-        "PHM": 7,
-        "DEC": 10.5,
-        "id": "5b5cc764-f2eb-4c19-9252-cdaf756099e6",
-        "title": "ピアノ協奏曲第１番”蠍火”",
-        "artist": "virkato (wac)",
-        "category": "VARIETY",
-        "difficulties": {
-            "NUL": 8.5,
-            "PHM": 13,
-            "DEC": 14.2,
-            "MET": 15.5,
-            "WMS": "全",
-            "WMS_cover": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ13a6xhVaLCMwJnpnkO4hU4HrXolXSQPz-IQ&s",
-            "HYP": 16.2,
-            "HYP_cover": "https://i1.sndcdn.com/artworks-000042415103-ynxsj6-t500x500.jpg",
-            "WMS_alias": "ピアノ協奏曲第1番\"蠍火\"(PF Concerto No.1 \"Anti-Ares\")"
-        },
-        "coverUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcReXhCXd0fXYhwbjMHHM0XK_Awa1AR089rZOw&s",
-        "bpm": 188,
-        "subgroup": "BEMANI"
-    }
-];
-
-const SEED_META = {
-    "juniUrl": "http://scpsandboxcn.wikidot.com/local--files/zampona/Juni_Kanban.png",
-    "juniConfig": {
-        "x": -89,
-        "y": 22,
-        "s": 1.1
-    },
-    "dialogues": [
-        "Juni is Here! (｡•̀ᴗ-)✧",
-        "System online. > <",
-        "Fragments loaded. (๑>◡<๑)",
-        "Awaiting input. (⁄ ⁄>⁄ ▽ ⁄<⁄ ⁄)",
-        "Kyunni~(∠> ▽ < )⌒♪"
-    ],
-    "catOrder": [
-        "All Songs",
-        "Original",
-        "Arcaea",
-        "CHUNITHM",
-        "O.N.G.E.K.I.",
-        "maimai DX",
-        "WHIMSY",
-        "VARIETY"
-    ],
-    "catMeta": {
-        "Original": {
-            "sub": "",
-            "cover": "N:\\桌面归档\\Picture\\随星录·泛南联邦\\42DA8FD19BEBB71E9A51A8C41A6B1E9A.png",
-            "fit": "cover"
-        },
-        "All Songs": {
-            "sub": "",
-            "cover": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/b3/16/f9/b316f90e-9252-4e00-0968-89c85c806b22/logo_youtube_music_2024_q4_color-0-1x_U007emarketing-0-0-0-7-0-0-0-85-220-0.png/512x512bb.jpg",
-            "fit": "cover"
-        },
-        "Arcaea": {
-            "sub": "",
-            "cover": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/2c/50/00/2c5000d8-01ea-82df-767b-8d8a8e5a08ca/AppIcon-0-0-1x_U007emarketing-0-11-0-85-220.png/512x512bb.jpg",
-            "fit": "cover"
-        },
-        "CHUNITHM": {
-            "sub": "",
-            "cover": "https://chunithm.sega.jp/$site/images/ogimage.jpg",
-            "fit": "cover"
-        },
-        "O.N.G.E.K.I.": {
-            "sub": "",
-            "cover": "https://images.igdb.com/igdb/image/upload/t_720p/co3d6d.jpg",
-            "fit": "cover"
-        },
-        "maimai DX": {
-            "sub": "",
-            "cover": "https://media.vgm.io/releases/87/36878/36878-1758238366.jpg",
-            "fit": "cover"
-        },
-        "WHIMSY": {
-            "sub": "",
-            "cover": "https://discovery.sndimg.com/content/dam/images/discovery/fullset/2022/10/Blackhole%20GettyImages-956705946.jpg.rend.hgtvcom.1280.1280.suffix/1665028642072.jpeg",
-            "fit": "cover"
-        },
-        "VARIETY": {
-            "cover": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/55/71/b0/5571b048-d811-a14e-51ab-f4dae0477c14/AppIcon-0-0-1x_U007epad-0-1-0-85-220.png/512x512bb.jpg",
-            "fit": "cover",
-            "sub": ""
-        }
-    }
-};
+// Generated from qualia_info.json by tools/sync-seed.mjs; never maintain two seeds.
+const SEED_SONGS = globalThis.QUALITHM_SEED?.songs || [];
+const SEED_META = globalThis.QUALITHM_SEED?.meta || { catOrder: [], catMeta: {}, juniConfig: {} };
 
 const DB = {
-    key: 'QUALITHM_DB_V8',
+    key: 'QUALITHM_DB_V9',
+    legacyKey: 'QUALITHM_DB_V8',
     async init() {
-        const raw = localStorage.getItem(this.key);
-        if (raw) {
-            const data = JSON.parse(raw);
-            State.songs = data.songs || SEED_SONGS;
-            State.meta = this.buildMeta(data.meta);
-        } else {
-            const imported = await this.loadLocalBootstrap();
-            State.songs = JSON.parse(JSON.stringify(imported?.songs || SEED_SONGS));
-            State.meta = this.buildMeta(imported?.meta);
-            this.save();
+        let cached;
+        this.storageWritable = true;
+        try {
+            const raw = localStorage.getItem(this.key) || localStorage.getItem(this.legacyKey);
+            if (raw) {
+                cached = JSON.parse(raw);
+                if (!Array.isArray(cached.songs)) throw new Error('Invalid cached song library');
+            }
+        } catch (error) {
+            cached = undefined;
+            this.storageWritable = false;
+            console.warn('Saved library could not be read; using bundled library for this session.', error);
         }
+        const seed = await this.loadLocalBootstrap() || { songs: SEED_SONGS, meta: SEED_META };
+        const merged = this.mergeSeed(cached, seed);
+        State.songs = this.normalizeSongs(merged.songs);
+        State.meta = this.buildMeta(merged.meta);
+        this.save();
         this.refreshCategories();
         setInterval(() => {
             const d = new Date();
             document.getElementById('sysTime').innerText = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
         }, 1000);
+    },
+    mergeSeed(local, seed) {
+        const songs = [...(local?.songs || [])];
+        const ids = new Set(songs.map(song => song.id));
+        for (const song of seed.songs) {
+            if (!ids.has(song.id)) { songs.push(song); ids.add(song.id); }
+        }
+        const meta = { ...seed.meta, ...(local?.meta || {}) };
+        meta.catMeta = { ...(seed.meta?.catMeta || {}), ...(local?.meta?.catMeta || {}) };
+        const order = [...(local?.meta?.catOrder || seed.meta?.catOrder || [])];
+        const seedOrder = seed.meta?.catOrder || [];
+        for (let i = 0; i < seedOrder.length; i++) {
+            const category = seedOrder[i];
+            if (order.includes(category)) continue;
+            const next = seedOrder.slice(i + 1).find(cat => order.includes(cat));
+            if (next) order.splice(order.indexOf(next), 0, category);
+            else order.push(category);
+        }
+        meta.catOrder = [...new Set(order)];
+        meta.seedVersion = seed.meta?.seedVersion || meta.seedVersion;
+        return { songs, meta };
+    },
+    previewSupplements(songs) {
+        return songs.flatMap(song => {
+            const seed = SEED_SONGS.find(item => item.id === song.id && item.title === song.title && item.artist === song.artist);
+            if (!seed?.preview?.url || song.preview?.url || song.previewUrl || song.preview?.start || song.preview?.end) return [];
+            return [{ song, seed }];
+        });
     },
     buildMeta(meta = {}) {
         const mergedMeta = {
@@ -838,6 +147,10 @@ const DB = {
             juniConfig: {
                 ...SEED_META.juniConfig,
                 ...(meta.juniConfig || {})
+            },
+            catMeta: {
+                ...(SEED_META.catMeta || {}),
+                ...(meta.catMeta || {})
             }
         };
 
@@ -845,28 +158,79 @@ const DB = {
             mergedMeta.juniUrl = SEED_META.juniUrl;
         }
 
+        const legacyCharacter = {
+            id: 'juni', name: 'Juni',
+            imageUrl: String(mergedMeta.juniUrl || '').replace(/^http:\/\/scpsandboxcn\.wikidot\.com/i, 'https://scpsandboxcn.wikidot.com'),
+            enabled: true,
+            x: Number(mergedMeta.juniConfig?.x) || 0,
+            y: Number(mergedMeta.juniConfig?.y) || 0,
+            scale: Number(mergedMeta.juniConfig?.s) || 1,
+            dialogues: Array.isArray(mergedMeta.dialogues) ? mergedMeta.dialogues : []
+        };
+        const sourceCharacters = Array.isArray(meta.characters) && meta.characters.length ? meta.characters : [legacyCharacter];
+        mergedMeta.characters = sourceCharacters.map((character, index) => ({
+            id: character.id || `character-${index + 1}`,
+            name: character.name || `CHARACTER ${index + 1}`,
+            imageUrl: String(character.imageUrl || character.url || '').replace(/^http:\/\/scpsandboxcn\.wikidot\.com/i, 'https://scpsandboxcn.wikidot.com'),
+            enabled: character.enabled !== false,
+            x: Number(character.x) || 0,
+            y: Number(character.y) || 0,
+            scale: Math.max(.5, Math.min(2, Number(character.scale ?? character.s) || 1)),
+            dialogues: Array.isArray(character.dialogues) ? character.dialogues.filter(Boolean) : []
+        }));
         return mergedMeta;
     },
+    normalizeSongs(songs) {
+        const seen = new Set();
+        return JSON.parse(JSON.stringify(songs)).filter(song => {
+            if (!song || typeof song !== 'object') return false;
+            const key = song.id || `${song.title}::${song.artist}::${song.category}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        }).map((song, index) => ({
+            ...song,
+            id: song.id || `song-${index + 1}`,
+            title: song.title || 'UNTITLED',
+            artist: song.artist || 'UNKNOWN ARTIST',
+            category: song.category || 'Original',
+            subgroup: song.subgroup || '',
+            difficulties: song.difficulties && typeof song.difficulties === 'object' ? song.difficulties : {},
+            preview: {
+                url: String(song.preview?.url ?? song.previewUrl ?? ''),
+                start: Math.max(0, Number(song.preview?.start ?? song.previewStart) || 0),
+                end: Number(song.preview?.end ?? song.previewEnd) > 0 ? Number(song.preview?.end ?? song.previewEnd) : null,
+                source: String(song.preview?.source || ''),
+                sourceUrl: String(song.preview?.sourceUrl || '')
+            }
+        }));
+    },
     async loadLocalBootstrap() {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
         try {
-            const response = await fetch('./qualia_info.json', { cache: 'no-store' });
+            const response = await fetch('./qualia_info.json', { cache: 'no-store', signal: controller.signal });
             if (!response.ok) return null;
             const data = await response.json();
-            if (!data || typeof data !== 'object') return null;
+            if (!data || !Array.isArray(data.songs) || !data.songs.length) return null;
             return data;
         } catch (e) {
             console.warn('qualia_info.json auto-import skipped:', e);
             return null;
-        }
+        } finally { clearTimeout(timeout); }
     },
     save() {
-        localStorage.setItem(this.key, JSON.stringify({ songs: State.songs, meta: State.meta }));
+        try {
+            if (this.storageWritable !== false) localStorage.setItem(this.key, JSON.stringify({ songs: State.songs, meta: State.meta }));
+        } catch (error) {
+            console.warn('Local storage unavailable; export JSON to keep session edits.', error);
+        }
         this.refreshCategories();
     },
     refreshCategories() {
         const songCats = new Set(State.songs.map(s => s.category));
-        let mergedSet = new Set([...songCats, ...State.meta.catOrder]);
-        let arr = Array.from(mergedSet).filter(c => c !== 'WHIMSY').sort();
+        let mergedSet = new Set([...songCats, ...(State.meta.catOrder || [])]);
+        let arr = Array.from(mergedSet).filter(c => !['All Songs', 'Favorites', 'Level', 'WHIMSY'].includes(c)).sort();
         
         if (State.meta.catOrder.length > 0) {
             arr.sort((a, b) => {
@@ -878,8 +242,11 @@ const DB = {
             });
         }
         
-        arr = arr.filter(c => c !== 'Original' && c !== 'All Songs');
-        arr.unshift('Original'); arr.unshift('All Songs');
+        arr = arr.filter(c => c !== 'Original');
+        arr.unshift('Original');
+        arr.unshift('Level');
+        arr.unshift('Favorites');
+        arr.unshift('All Songs');
         if (State.songs.some(s => s.difficulties.WMS)) arr.push('WHIMSY');
         
         State.categories = arr;
@@ -889,16 +256,58 @@ const DB = {
 
 const State = {
     songs: [], meta: {}, categories: [],
-    currCat: null, currSongId: null, currDiff: 'MET',
-    sortMode: 'level_desc', isPrecise: false, devMode: false, batchMode: false,
-    selectedSongs: new Set(),
+    currCat: null, currSongId: null, currDiff: 'MET', filterDiff: 'MET',
+    sortMode: 'subgroup', isPrecise: false, devMode: false, batchMode: false,
+    selectedSongs: new Set(), favorites: new Set(), visibleEntries: [], lastRandomKey: null,
     
     get currentSong() { return this.songs.find(s => s.id === this.currSongId); },
-    get isWhimsyCat() { return this.currCat === 'WHIMSY'; }
+    get isWhimsyCat() { return this.currCat === 'WHIMSY'; },
+    get isLevelCat() { return this.currCat === 'Level'; }
+};
+
+const UserState = {
+    key: 'QUALITHM_USER_STATE_V1',
+    init() {
+        try {
+            const data = JSON.parse(localStorage.getItem(this.key) || '{}');
+            State.favorites = new Set(Array.isArray(data.favorites) ? data.favorites.filter(Boolean) : []);
+        } catch {
+            State.favorites = new Set();
+        }
+    },
+    save() {
+        localStorage.setItem(this.key, JSON.stringify({ favorites: Array.from(State.favorites) }));
+    },
+    has(songId) { return Boolean(songId) && State.favorites.has(songId); },
+    toggle(songId = State.currSongId) {
+        if (!songId) return;
+        if (State.favorites.has(songId)) State.favorites.delete(songId);
+        else State.favorites.add(songId);
+        this.save();
+        Render.songList();
+    },
+    renderFavorite() {
+        const button = document.getElementById('favoriteToggle');
+        if (!button) return;
+        const active = this.has(State.currSongId);
+        button.disabled = !State.currentSong;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+        button.title = active ? 'Remove from Favorites' : 'Add to Favorites';
+        button.querySelector('.favorite-glyph').textContent = active ? '★' : '☆';
+    }
+};
+
+const DevUI = {
+    sync() {
+        document.querySelectorAll('.dev-only').forEach(element => element.classList.toggle('hidden', !State.devMode));
+        document.getElementById('devToggle')?.classList.toggle('active', State.devMode);
+    }
 };
 
 const SceneManager = {
     switch(id) {
+        if (id !== 'music') Preview.stop();
         document.querySelectorAll('.scene').forEach(el => el.classList.remove('active'));
         document.getElementById(`scene-${id}`).classList.add('active');
         
@@ -907,47 +316,80 @@ const SceneManager = {
         else sysInfo.classList.add('hidden');
 
         if (id === 'menu') Juni.applyConfig();
-        if (id === 'category') Render.categoryGrid();
+        if (id === 'category') {
+            try { Render.categoryGrid(); }
+            catch (error) { console.error('Archive rendering failed:', error); Render.categoryError(); }
+        }
         if (id === 'music') {
             State.batchMode = false;
-            if (State.currCat === 'All Songs') {
-                State.sortMode = 'level_desc';
-            } else {
-                State.sortMode = 'subgroup';
-            }
+            State.sortMode = State.isLevelCat ? 'level_desc' : (State.currCat === 'All Songs' ? 'pack' : 'subgroup');
             BatchOps.renderUI();
+            QuickPack.render();
+            DifficultyFilter.render();
             Render.songList();
         }
+        DevUI.sync();
     }
 };
 
 const Juni = {
+    index: 0,
+    get list() {
+        const enabled = (State.meta.characters || []).filter(character => character.enabled !== false);
+        return enabled.length ? enabled : (State.meta.characters || []);
+    },
+    get current() { return this.list[this.index] || this.list[0]; },
     init() {
         this.applyConfig();
         document.getElementById('charContainer').onclick = () => { if(!State.devMode) this.speak(); };
-        setInterval(() => { if (Math.random() > 0.7 && !State.devMode) this.speak(); }, 15000);
+        document.getElementById('charSwitcher').onclick = event => event.stopPropagation();
+        document.querySelector('.char-controls').onclick = event => event.stopPropagation();
+        setInterval(() => {
+            if (!State.devMode && document.getElementById('scene-menu').classList.contains('active')) {
+                this.list.length > 1 ? this.next() : this.speak();
+            }
+        }, 30000);
     },
     applyConfig() {
         const img = document.getElementById('heroImage');
-        const cfg = State.meta.juniConfig;
-        img.src = State.meta.juniUrl;
-        img.style.transform = `translate(calc(-50% + ${cfg.x}px), calc(-50% + ${cfg.y}px)) scale(${cfg.s})`;
+        const character = this.current;
+        if (!character) return;
+        img.alt = character.name;
+        img.classList.remove('image-error');
+        img.onerror = () => img.classList.add('image-error');
+        img.onload = () => img.classList.remove('image-error');
+        img.src = character.imageUrl || '';
+        img.style.transform = `translate(calc(-50% + ${character.x}px), calc(-50% + ${character.y}px)) scale(${character.scale})`;
+        document.getElementById('activeCharacterName').innerText = `${String(character.name).toUpperCase()} // ${String(this.index + 1).padStart(2, '0')}`;
         if(State.devMode) {
-            document.getElementById('juniX').value = cfg.x;
-            document.getElementById('juniY').value = cfg.y;
-            document.getElementById('juniS').value = cfg.s;
+            document.getElementById('juniX').value = character.x;
+            document.getElementById('juniY').value = character.y;
+            document.getElementById('juniS').value = character.scale;
         }
     },
     updateConfig() {
-        State.meta.juniConfig = {
-            x: parseInt(document.getElementById('juniX').value),
-            y: parseInt(document.getElementById('juniY').value),
-            s: parseFloat(document.getElementById('juniS').value)
-        };
+        const character = this.current; if (!character) return;
+        character.x = parseInt(document.getElementById('juniX').value);
+        character.y = parseInt(document.getElementById('juniY').value);
+        character.scale = parseFloat(document.getElementById('juniS').value);
         this.applyConfig(); DB.save();
     },
+    next() { if (!this.list.length) return; this.index = (this.index + 1) % this.list.length; this.applyConfig(); this.speak(); },
+    prev() { if (!this.list.length) return; this.index = (this.index - 1 + this.list.length) % this.list.length; this.applyConfig(); this.speak(); },
+    add() {
+        const character = { id: crypto.randomUUID?.() || `character-${Date.now()}`, name: `CHARACTER ${(State.meta.characters?.length || 0) + 1}`, imageUrl: '', enabled: true, x: 0, y: 0, scale: 1, dialogues: ['New resonance connected.'] };
+        State.meta.characters.push(character); this.index = this.list.indexOf(character); DB.save(); this.applyConfig();
+    },
+    remove() {
+        if ((State.meta.characters || []).length <= 1) return alert('At least one character is required.');
+        if (!confirm(`Remove ${this.current.name}?`)) return;
+        State.meta.characters = State.meta.characters.filter(character => character !== this.current); this.index = 0; DB.save(); this.applyConfig();
+    },
+    editName() { const value = prompt('Character Name:', this.current?.name || ''); if (value) { this.current.name = value.trim(); DB.save(); this.applyConfig(); } },
+    editAsset() { const value = prompt('Character Image URL / Relative Path:', this.current?.imageUrl || ''); if (value !== null) { this.current.imageUrl = value.trim(); DB.save(); this.applyConfig(); } },
+    editDialogues() { const value = prompt('Dialogues separated by |', (this.current?.dialogues || []).join('|')); if (value !== null) { this.current.dialogues = value.split('|').map(line => line.trim()).filter(Boolean); DB.save(); } },
     speak() {
-        const lines = State.meta.dialogues; if (!lines || lines.length === 0) return;
+        const lines = this.current?.dialogues; if (!lines || lines.length === 0) return;
         const line = lines[Math.floor(Math.random() * lines.length)];
         const box = document.getElementById('dialogueBox');
         document.getElementById('dialogueText').innerText = line;
@@ -957,94 +399,421 @@ const Juni = {
     }
 };
 
+const ChartPolicy = {
+    ordinaryEntry(song) {
+        if (!song?.difficulties) return null;
+        if (State.isWhimsyCat) {
+            return song.difficulties.WMS !== undefined ? { song, diff: 'WMS', val: song.difficulties.WMS, fallback: false } : null;
+        }
+        const requested = State.filterDiff;
+        if (requested === 'HYP') {
+            if (song.difficulties.HYP !== undefined) return { song, diff: 'HYP', val: song.difficulties.HYP, fallback: false };
+            if (song.difficulties.MET !== undefined) return { song, diff: 'MET', val: song.difficulties.MET, fallback: true };
+            return null;
+        }
+        return song.difficulties[requested] !== undefined
+            ? { song, diff: requested, val: song.difficulties[requested], fallback: false }
+            : null;
+    },
+    levelEntries(song) {
+        return CHART_KEYS
+            .filter(diff => song?.difficulties?.[diff] !== undefined)
+            .map(diff => ({ song, diff, val: song.difficulties[diff], fallback: false }));
+    }
+};
+
+const DifficultyFilter = {
+    select(diff) {
+        if (!CHART_KEYS.includes(diff)) return;
+        State.filterDiff = diff;
+        if (!State.isLevelCat) {
+            const entry = ChartPolicy.ordinaryEntry(State.currentSong);
+            if (entry) State.currDiff = entry.diff;
+            else State.currSongId = null;
+        }
+        this.render();
+        Render.songList();
+    },
+    render() {
+        const bar = document.getElementById('chartFilterBar');
+        if (!bar) return;
+        bar.classList.toggle('level-mode', State.isLevelCat || State.isWhimsyCat);
+        const visibleDiff = State.isWhimsyCat ? 'WMS' : State.filterDiff;
+        bar.querySelectorAll('[data-diff]').forEach(button => button.classList.toggle('active', button.dataset.diff === visibleDiff));
+        const help = document.getElementById('chartFilterHelp');
+        let baseText = '';
+        if (State.isLevelCat) baseText = 'ALL CHARTS / DUPLICATES ENABLED';
+        else if (State.isWhimsyCat) baseText = 'WMS CHARTS ONLY';
+        else if (State.filterDiff === 'HYP') baseText = 'HYP / MET FALLBACK';
+        else baseText = `${State.filterDiff} CHARTS ONLY`;
+        help.dataset.baseText = baseText;
+        help.innerText = baseText;
+    }
+};
+
+const QuickPack = {
+    render() {
+        const select = document.getElementById('quickPackSelect');
+        if (!select) return;
+        select.innerHTML = '';
+        State.categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.innerText = category;
+            option.selected = category === State.currCat;
+            select.appendChild(option);
+        });
+    },
+    select(category) {
+        if (!State.categories.includes(category)) return;
+        State.currCat = category;
+        State.sortMode = State.isLevelCat ? 'level_desc' : (category === 'All Songs' ? 'pack' : 'subgroup');
+        Preview.stop();
+        this.render(); DifficultyFilter.render(); Render.songList();
+    },
+    step(direction) {
+        const index = Math.max(0, State.categories.indexOf(State.currCat));
+        this.select(State.categories[(index + direction + State.categories.length) % State.categories.length]);
+    }
+};
+
+const PackScroller = {
+    initialized: false,
+    init() {
+        if (this.initialized) return;
+        this.initialized = true;
+        const container = document.querySelector('#scene-category .scroll-container');
+        document.getElementById('packScrollPrev').onclick = () => this.step(-1);
+        document.getElementById('packScrollNext').onclick = () => this.step(1);
+        container.addEventListener('scroll', () => this.refresh(), { passive: true });
+        container.addEventListener('wheel', event => {
+            if (container.scrollWidth <= container.clientWidth || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+            event.preventDefault();
+            container.scrollBy({ left: event.deltaY, behavior: 'smooth' });
+        }, { passive: false });
+        window.addEventListener('resize', () => this.refresh(), { passive: true });
+    },
+    cards() { return Array.from(document.querySelectorAll('#categoryGrid .cat-card')); },
+    activeIndex() {
+        const container = document.querySelector('#scene-category .scroll-container');
+        const cards = this.cards();
+        if (!cards.length) return 0;
+        const center = container.scrollLeft + container.clientWidth / 2;
+        return cards.reduce((best, card, index) => {
+            const distance = Math.abs(card.offsetLeft + card.offsetWidth / 2 - center);
+            return distance < best.distance ? { index, distance } : best;
+        }, { index: 0, distance: Infinity }).index;
+    },
+    step(direction) {
+        const cards = this.cards();
+        if (!cards.length) return;
+        const index = Math.max(0, Math.min(cards.length - 1, this.activeIndex() + direction));
+        cards[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        window.setTimeout(() => this.refresh(), 280);
+    },
+    refresh() {
+        const cards = this.cards();
+        const index = this.activeIndex();
+        document.getElementById('packPosition').innerText = `${String(cards.length ? index + 1 : 0).padStart(2, '0')} / ${String(cards.length).padStart(2, '0')}`;
+        document.getElementById('packScrollPrev').disabled = !cards.length || index <= 0;
+        document.getElementById('packScrollNext').disabled = !cards.length || index >= cards.length - 1;
+    }
+};
+
+const ChartSelection = {
+    select(entry, { autoplay = true, scroll = false } = {}) {
+        if (!entry?.song) return;
+        const changedSong = State.currSongId !== entry.song.id;
+        State.currSongId = entry.song.id;
+        State.currDiff = entry.diff;
+        Render.songList();
+        Preview.select(entry.song, autoplay && changedSong);
+        if (scroll) requestAnimationFrame(() => {
+            const key = `${entry.song.id}::${entry.diff}`;
+            const row = Array.from(document.querySelectorAll('.song-row')).find(element => element.dataset.entryKey === key);
+            row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    }
+};
+
+const RandomSelect = {
+    pick() {
+        const pool = State.visibleEntries || [];
+        if (!pool.length) return;
+        const currentKey = `${State.currSongId}::${State.currDiff}`;
+        const alternatives = pool.length > 1 ? pool.filter(entry => `${entry.song.id}::${entry.diff}` !== currentKey) : pool;
+        const entry = alternatives[Math.floor(Math.random() * alternatives.length)];
+        State.lastRandomKey = `${entry.song.id}::${entry.diff}`;
+        ChartSelection.select(entry, { autoplay: true, scroll: true });
+    }
+};
+
+const Preview = {
+    audio: new Audio(), songId: null, playing: false, muted: false, looping: false, fadeTimer: null, requestToken: 0,
+    init() {
+        this.audio.preload = 'metadata';
+        this.audio.addEventListener('timeupdate', () => this.onTime());
+        this.audio.addEventListener('ended', () => this.restart());
+        this.audio.addEventListener('play', () => { this.playing = true; this.render(); });
+        this.audio.addEventListener('pause', () => { this.playing = false; this.render(); });
+        this.audio.addEventListener('error', () => {
+            this.playing = false;
+            this.render('PREVIEW UNAVAILABLE');
+        });
+    },
+    get config() {
+        const song = State.currentSong;
+        if (State.currDiff === 'WMS' && song && Object.hasOwn(song, 'WMS_previewUrl')) {
+            return { url: song.WMS_previewUrl || '', start: 0, end: null, source: song.WMS_previewUrl ? 'iTunes' : '', sourceUrl: song.WMS_previewSourceUrl || '' };
+        }
+        return song?.preview || {};
+    },
+    get externalOnly() {
+        // Store API samples are promotional assets, not licensed game-loop audio.
+        return this.config.source === 'iTunes' || /\.itunes\.apple\.com\//i.test(this.config.url || '');
+    },
+    async select(song, autoplay = true) {
+        if (!song) return this.stop();
+        const key = `${song.id}::${this.config.url || ''}`;
+        if (this.songId !== key) {
+            this.stop(true);
+            this.songId = key;
+        }
+        const token = ++this.requestToken;
+        this.render();
+        if (autoplay && this.config.url && !this.muted && !this.externalOnly) await this.play(token);
+    },
+    async play(token = ++this.requestToken) {
+        const song = State.currentSong;
+        const config = this.config;
+        if (!config.url || this.muted || this.externalOnly) return this.render();
+        let resolved = config.url;
+        try { resolved = new URL(config.url, location.href).href; } catch {}
+        if (this.audio.src !== resolved) {
+            this.audio.src = config.url;
+            this.audio.load();
+        }
+        const begin = async () => {
+            if (token !== this.requestToken || State.currentSong?.id !== song.id || this.muted) return;
+            const start = Math.max(0, Number(config.start) || 0);
+            const end = this.endTime();
+            if (this.audio.currentTime < start || this.audio.currentTime >= end) this.audio.currentTime = start;
+            this.audio.volume = 0;
+            try {
+                await this.audio.play();
+                if (token === this.requestToken) this.fadeTo(1, 650);
+            }
+            catch { this.render('TAP TO PREVIEW'); }
+        };
+        if (this.audio.readyState >= 1) await begin();
+        else this.audio.addEventListener('loadedmetadata', begin, { once: true });
+    },
+    pause() { this.requestToken += 1; this.fadeTo(0, 260, () => this.audio.pause()); },
+    stop(immediate = false) {
+        this.requestToken += 1;
+        clearInterval(this.fadeTimer);
+        if (!immediate && !this.audio.paused) return this.fadeTo(0, 220, () => this.resetAudio());
+        this.resetAudio();
+    },
+    resetAudio() {
+        this.audio.pause();
+        this.audio.removeAttribute('src');
+        this.audio.load();
+        this.playing = false;
+        this.render();
+    },
+    fadeTo(target, duration, done) {
+        clearInterval(this.fadeTimer);
+        const origin = this.audio.volume;
+        const steps = Math.max(1, Math.ceil(duration / 40));
+        let step = 0;
+        this.fadeTimer = setInterval(() => {
+            step += 1;
+            this.audio.volume = Math.max(0, Math.min(1, origin + (target - origin) * (step / steps)));
+            if (step >= steps) { clearInterval(this.fadeTimer); done?.(); }
+        }, 40);
+    },
+    endTime() {
+        const requested = Number(this.config.end);
+        const duration = Number.isFinite(this.audio.duration) ? this.audio.duration : Infinity;
+        return requested > Number(this.config.start || 0) ? Math.min(requested, duration) : duration;
+    },
+    onTime() {
+        if (!this.playing) return;
+        const start = Math.max(0, Number(this.config.start) || 0);
+        const end = this.endTime();
+        const duration = Math.max(.1, end - start);
+        const elapsed = Math.max(0, this.audio.currentTime - start);
+        if (Number.isFinite(end) && end - this.audio.currentTime < .8 && end > this.audio.currentTime) this.audio.volume = Math.max(.04, (end - this.audio.currentTime) / .8);
+        if (this.audio.currentTime >= end) this.restart();
+        document.getElementById('previewProgress').style.width = `${Math.min(100, elapsed / duration * 100)}%`;
+        document.getElementById('previewStatus').innerText = `${this.time(elapsed)} / ${this.time(duration)} · LOOP`;
+    },
+    restart() {
+        if (this.looping || this.muted || !this.config.url) return;
+        const token = this.requestToken;
+        this.looping = true;
+        this.audio.currentTime = Math.max(0, Number(this.config.start) || 0);
+        this.audio.volume = 0;
+        this.audio.play().then(() => { if (token === this.requestToken) this.fadeTo(1, 650); }).catch(() => {});
+        setTimeout(() => { this.looping = false; }, 160);
+    },
+    toggle() {
+        if (this.externalOnly) {
+            if (/^https:\/\/music\.apple\.com\//i.test(this.config.sourceUrl || '')) window.open(this.config.sourceUrl, '_blank', 'noopener,noreferrer');
+            return;
+        }
+        this.playing ? this.pause() : this.play();
+    },
+    toggleMute() {
+        this.muted = !this.muted;
+        if (this.muted) this.stop();
+        const icon = document.querySelector('#audioToggle i');
+        icon.className = this.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+        document.getElementById('audioToggle').classList.toggle('active', this.muted);
+        this.render();
+    },
+    time(seconds) { return Number.isFinite(seconds) ? `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}` : '--:--'; },
+    render(message) {
+        const button = document.getElementById('previewToggle');
+        if (!button) return;
+        const available = this.externalOnly ? /^https:\/\/music\.apple\.com\//i.test(this.config.sourceUrl || '') : Boolean(this.config.url);
+        button.disabled = !available;
+        button.classList.toggle('playing', this.playing);
+        button.querySelector('i').className = this.externalOnly ? 'fa-solid fa-arrow-up-right-from-square' : this.playing ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+        button.title = this.externalOnly ? '在 Apple Music 打开官方试听，不作为站内循环音频' : 'Play / pause authorized preview';
+        if (!this.playing) document.getElementById('previewProgress').style.width = '0%';
+        document.getElementById('previewStatus').innerText = message || (available ? (this.externalOnly ? '官方试听 ↗ APPLE MUSIC' : this.muted ? 'PREVIEW MUTED' : 'READY · FADE / LOOP') : 'NO AUDIO');
+        const source = document.getElementById('previewSource');
+        const sourceUrl = this.config.sourceUrl || '';
+        const safeSource = /^https?:\/\//i.test(sourceUrl);
+        source.classList.toggle('hidden', !safeSource);
+        if (safeSource) source.href = sourceUrl;
+    }
+};
+
 const Render = {
+    categoryError() {
+        const grid = document.getElementById('categoryGrid');
+        grid.innerHTML = `
+            <div class="category-error" role="alert">
+                <span>ARCHIVE DATA INTERRUPTED</span>
+                <button type="button" onclick="Render.categoryGrid()">RETRY</button>
+            </div>`;
+        document.getElementById('catCount').innerText = 'ARCHIVE LOAD ERROR';
+        PackScroller.refresh();
+    },
     categoryGrid() {
         const grid = document.getElementById('categoryGrid');
         grid.innerHTML = '';
-        State.categories.forEach(cat => {
+        const allChartCount = State.songs.reduce((sum, song) => sum + CHART_KEYS.filter(key => song.difficulties?.[key] !== undefined).length, 0);
+        State.categories.forEach((cat, index) => {
             const card = document.createElement('div');
-            
-            let count = (cat === 'All Songs') ? State.songs.length : 
-                        (cat === 'WHIMSY') ? State.songs.filter(s => s.difficulties.WMS).length :
-                        State.songs.filter(s => s.category === cat).length;
+
+            const scopedSongs = cat === 'All Songs' || cat === 'Level'
+                ? State.songs
+                : cat === 'Favorites'
+                    ? State.songs.filter(song => UserState.has(song.id))
+                    : cat === 'WHIMSY'
+                        ? State.songs.filter(song => song.difficulties.WMS !== undefined)
+                        : State.songs.filter(song => song.category === cat);
+            const songCount = scopedSongs.length;
+            const chartCount = cat === 'WHIMSY'
+                ? songCount
+                : scopedSongs.reduce((sum, song) => sum + CHART_KEYS.filter(key => song.difficulties?.[key] !== undefined).length, 0);
 
             let stackClass = '';
-            if (count > 8) stackClass = 'stack-3';
-            else if (count > 4) stackClass = 'stack-2';
+            if (songCount > 8) stackClass = 'stack-3';
+            else if (songCount > 4) stackClass = 'stack-2';
             
-            card.className = `cat-card tilted ${stackClass}`;
+            card.className = `cat-card tilted ${stackClass} ${cat === 'Level' ? 'level-card' : ''}`;
+            card.dataset.packIndex = String(index);
             card.style.setProperty('--r', Utils.randomTilt());
             
             const meta = State.meta.catMeta[cat] || {};
-            const fallbackSongCover = State.songs.find(s => s.category === cat)?.coverUrl;
-            const cover = meta.cover || DEFAULT_CAT_COVERS[cat] || fallbackSongCover || `https://placehold.co/300x500/eee/333?text=${cat.substring(0,2)}`;
+            const fallbackSongCover = scopedSongs[0]?.coverUrl || (['All Songs', 'Level'].includes(cat) ? State.songs[0]?.coverUrl : '');
+            const cover = [meta.cover, DEFAULT_CAT_COVERS[cat], fallbackSongCover].find(url => Utils.isBrowserAsset(url)) || '';
             const isContain = meta.fit === 'contain';
+            const isVirtual = ['All Songs', 'Favorites', 'Level', 'WHIMSY'].includes(cat);
+            const tools = isVirtual ? '' : `
+                <div class="cat-tools dev-only hidden">
+                    <button class="btn-mini" data-action="prev" aria-label="Move pack left"><i class="fa-solid fa-arrow-left"></i></button>
+                    <button class="btn-mini" data-action="edit" aria-label="Edit pack"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn-mini" data-action="delete" aria-label="Delete pack"><i class="fa-solid fa-trash"></i></button>
+                    <button class="btn-mini" data-action="next" aria-label="Move pack right"><i class="fa-solid fa-arrow-right"></i></button>
+                </div>`;
             
             card.innerHTML = `
-                <img class="cat-img ${isContain ? 'fit-contain' : ''}" src="${cover}">
+                <img class="cat-img ${isContain ? 'fit-contain' : ''}" src="${Utils.escapeHTML(cover)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+                <div class="cat-index"><span>ARCHIVE ${String(index + 1).padStart(2, '0')}</span><span>${isVirtual ? 'SYSTEM' : 'PACK'}</span></div>
                 <div class="cat-info">
-                    <div class="cnt">${count} TRACKS</div>
-                    <h3>${cat}</h3>
-                    <div class="cat-subtitle">${meta.sub || ''}</div>
+                    <div class="cnt">${songCount} SONGS // ${chartCount} CHARTS</div>
+                    <h3>${Utils.escapeHTML(cat)}</h3>
+                    <div class="cat-subtitle">${Utils.escapeHTML(meta.sub || '')}</div>
                 </div>
-                <div class="cat-tools dev-only hidden">
-                    <button class="btn-mini" onclick="CatOps.move('${cat}', -1)"><i class="fa-solid fa-arrow-left"></i></button>
-                    <button class="btn-mini" onclick="CatOps.edit('${cat}')"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn-mini" onclick="CatOps.delete('${cat}')"><i class="fa-solid fa-trash"></i></button>
-                    <button class="btn-mini" onclick="CatOps.move('${cat}', 1)"><i class="fa-solid fa-arrow-right"></i></button>
-                </div>
+                ${tools}
             `;
-            card.querySelector('.cat-tools').addEventListener('click', e => e.stopPropagation());
+            const image = card.querySelector('.cat-img');
+            const placeholder = document.createElement('div');
+            placeholder.className = 'cat-placeholder';
+            placeholder.innerText = cat;
+            card.prepend(placeholder);
+            if (!cover) { image.classList.add('image-error'); card.classList.add('image-fallback'); }
+            image.onerror = () => { image.classList.add('image-error'); card.classList.add('image-fallback'); };
+            image.onload = () => card.classList.remove('image-fallback');
+            card.querySelector('.cat-tools')?.addEventListener('click', event => {
+                event.stopPropagation();
+                const action = event.target.closest('[data-action]')?.dataset.action;
+                if (action === 'prev') CatOps.move(cat, -1);
+                if (action === 'next') CatOps.move(cat, 1);
+                if (action === 'edit') CatOps.edit(cat);
+                if (action === 'delete') CatOps.delete(cat);
+            });
             card.onclick = () => { State.currCat = cat; SceneManager.switch('music'); };
             grid.appendChild(card);
         });
-        document.getElementById('catCount').innerText = `${State.categories.length} ARCHIVES`;
-        document.querySelectorAll('.dev-only').forEach(el => el.classList.toggle('hidden', !State.devMode));
+        document.getElementById('catCount').innerText = `${State.songs.length} SONGS // ${allChartCount} CHARTS // ${State.categories.length} ARCHIVES`;
+        DevUI.sync();
+        requestAnimationFrame(() => PackScroller.refresh());
     },
 
     songList() {
         const list = document.getElementById('songList');
-        const filter = document.getElementById('searchInput').value.toLowerCase();
+        const filter = document.getElementById('searchInput').value.normalize('NFKC').trim().toLocaleLowerCase();
         list.innerHTML = '';
         const isFlatMode = State.sortMode === 'flat_alpha';
-        document.getElementById('listCatName').innerText = isFlatMode ? 'NO CATEGORY MODE' : State.currCat;
-        document.getElementById('listCatSub').innerText = isFlatMode ? 'ALL PACKS / TITLE A→Z' : (State.meta.catMeta[State.currCat]?.sub || "");
+        document.getElementById('listCatName').innerText = State.isLevelCat ? 'LEVEL INDEX' : State.currCat;
+        document.getElementById('listCatSub').innerText = State.isLevelCat
+            ? 'ALL CHARTS / CONSTANT ORDER'
+            : State.currCat === 'Favorites'
+                ? 'PERSONAL FAVORITES'
+                : (State.meta.catMeta[State.currCat]?.sub || (isFlatMode ? 'TITLE A→Z' : ''));
 
         let rawItems = State.songs.filter(s => {
-            if (isFlatMode || State.currCat === 'All Songs') return true;
+            if (State.isLevelCat || State.currCat === 'All Songs') return true;
+            if (State.currCat === 'Favorites') return UserState.has(s.id);
             if (State.currCat === 'WHIMSY') return s.difficulties.WMS !== undefined;
             return s.category === State.currCat;
         });
-        if (filter) rawItems = rawItems.filter(s => s.title.toLowerCase().includes(filter));
 
-        let displayItems = [];
-        rawItems.forEach(song => {
-            if (State.currCat === 'All Songs' && State.sortMode.startsWith('level')) {
-                if (song.difficulties.HYP) displayItems.push({ song, diff: 'HYP', val: song.difficulties.HYP });
-                if (song.difficulties.MET) displayItems.push({ song, diff: 'MET', val: song.difficulties.MET });
-                if (song.difficulties.DEC) displayItems.push({ song, diff: 'DEC', val: song.difficulties.DEC });
-                if (song.difficulties.PHM) displayItems.push({ song, diff: 'PHM', val: song.difficulties.PHM });
-                if (song.difficulties.NUL) displayItems.push({ song, diff: 'NUL', val: song.difficulties.NUL });
-                if (song.difficulties.WMS) displayItems.push({ song, diff: 'WMS', val: 999 });
-            } else {
-                let dKey = State.isWhimsyCat ? 'WMS' : State.currDiff;
-                if (!song.difficulties[dKey] && dKey !== 'WMS') {
-                    if (song.difficulties.HYP) dKey = 'HYP';
-                    else if (song.difficulties.MET) dKey = 'MET';
-                    else if (song.difficulties.DEC) dKey = 'DEC';
-                    else dKey = Object.keys(song.difficulties)[0];
-                }
-                
-                let v = song.difficulties[dKey] || 0;
-                displayItems.push({ song, diff: dKey, val: v });
-            }
-        });
+        let displayItems = State.isLevelCat
+            ? rawItems.flatMap(song => ChartPolicy.levelEntries(song))
+            : rawItems.map(song => ChartPolicy.ordinaryEntry(song)).filter(Boolean);
+
+        const displayFields = item => {
+            const { song, diff } = item;
+            const title = diff === 'HYP' ? (song.hyperTitle || song.title) : diff === 'WMS' ? (song.difficulties.WMS_alias || song.title) : song.title;
+            const artist = diff === 'HYP' ? (song.difficulties.HYP_artist || song.artist) : diff === 'WMS' ? (song.difficulties.WMS_artist || song.artist) : song.artist;
+            return [song.title, song.alias, song.artist, title, artist, song.category, song.subgroup, song.hidden ? 'HIDDEN' : '', diff, item.val, item.fallback ? 'HYP MET FALLBACK' : '']
+                .map(value => String(value || '').normalize('NFKC').toLocaleLowerCase());
+        };
+        if (filter) displayItems = displayItems.filter(item => displayFields(item).some(value => value.includes(filter)));
 
         if (State.sortMode === 'pack') {
             displayItems.sort((a, b) => {
                 const idxA = State.categories.indexOf(a.song.category);
                 const idxB = State.categories.indexOf(b.song.category);
-                return idxA - idxB || a.song.title.localeCompare(b.song.title);
+                return idxA - idxB || (a.song.subgroup || '').localeCompare(b.song.subgroup || '', 'zh-CN', { numeric: true }) || a.song.title.localeCompare(b.song.title, 'zh-CN');
             });
         } else if (State.sortMode === 'subgroup') {
              displayItems.sort((a, b) => {
@@ -1052,30 +821,59 @@ const Render = {
                 const sb = b.song.subgroup || 'ZZZ';
                 const ca = a.song.category || '';
                 const cb = b.song.category || '';
-                const va = typeof a.val === 'string' ? 999 : Number(a.val || 0);
-                const vb = typeof b.val === 'string' ? 999 : Number(b.val || 0);
+                const va = a.diff === 'WMS' ? Infinity : Number(a.val || 0);
+                const vb = b.diff === 'WMS' ? Infinity : Number(b.val || 0);
+                const order = (Number.isFinite(a.song.packOrder) ? a.song.packOrder : Infinity) - (Number.isFinite(b.song.packOrder) ? b.song.packOrder : Infinity);
 
                 if (State.currCat === 'All Songs') {
-                    return ca.localeCompare(cb) || sa.localeCompare(sb) || va - vb || a.song.title.localeCompare(b.song.title);
+                    return ca.localeCompare(cb) || sa.localeCompare(sb) || order || va - vb || a.song.title.localeCompare(b.song.title);
                 }
 
-                return sa.localeCompare(sb) || va - vb || a.song.title.localeCompare(b.song.title);
+                return sa.localeCompare(sb, 'zh-CN', { numeric: true }) || order || va - vb || a.song.title.localeCompare(b.song.title, 'zh-CN');
              });
         } else if (State.sortMode === 'flat_alpha') {
-            displayItems.sort((a, b) => {
-                const sa = a.song.subgroup || 'ZZZ';
-                const sb = b.song.subgroup || 'ZZZ';
-                return sa.localeCompare(sb) || a.song.title.localeCompare(b.song.title);
-            });
+            displayItems.sort((a, b) => a.song.title.localeCompare(b.song.title, 'zh-CN', { numeric: true }));
         } else {
             displayItems.sort((a, b) => {
-                let vA = (typeof a.val === 'string') ? 999 : a.val;
-                let vB = (typeof b.val === 'string') ? 999 : b.val;
-                return State.sortMode === 'level_desc' ? vB - vA : vA - vB;
+                let vA = a.diff === 'WMS' ? Infinity : Number(a.val);
+                let vB = b.diff === 'WMS' ? Infinity : Number(b.val);
+                const primary = State.sortMode === 'level_desc' ? vB - vA : vA - vB;
+                return primary || a.song.title.localeCompare(b.song.title, 'zh-CN') || CHART_KEYS.indexOf(a.diff) - CHART_KEYS.indexOf(b.diff);
             });
         }
 
-        const groups = {};
+        State.visibleEntries = displayItems;
+        const visibleSongCount = new Set(displayItems.map(item => item.song.id)).size;
+        const help = document.getElementById('chartFilterHelp');
+        const baseText = help.dataset.baseText || help.innerText || 'CHART FILTER';
+        help.innerText = `${baseText} · ${visibleSongCount} SONGS / ${displayItems.length} CHARTS`;
+        const randomButton = document.getElementById('randomSelect');
+        randomButton.disabled = displayItems.length === 0 || State.batchMode;
+        randomButton.title = State.batchMode ? 'RANDOM DISABLED IN BATCH MODE' : (displayItems.length ? `RANDOM FROM ${displayItems.length} CHARTS` : 'NO CHARTS TO RANDOMIZE');
+
+        const currentVisible = displayItems.some(item => item.song.id === State.currSongId && item.diff === State.currDiff);
+        if (!State.batchMode && !currentVisible) {
+            const first = displayItems[0];
+            if (first) {
+                State.currSongId = first.song.id;
+                State.currDiff = first.diff;
+                Preview.select(first.song, false);
+            } else {
+                State.currSongId = null;
+                Preview.stop();
+            }
+        }
+
+        if (!displayItems.length) {
+            State.currSongId = null;
+            Preview.stop();
+            list.innerHTML = '<div class="empty-list">NO CHARTS IN THE CURRENT FILTER<br>CHANGE PACK, DIFFICULTY OR SEARCH</div>';
+            Render.emptyDetail();
+            DevUI.sync();
+            return;
+        }
+
+        const groups = Object.create(null);
         const groupOrder = [];
 
         displayItems.forEach(item => {
@@ -1083,7 +881,7 @@ const Render = {
             let headerText = '';
             
             if (State.sortMode.startsWith('level')) {
-                if (val === 999 || diff === 'WMS') headerText = 'WHIMSIES'; 
+                if (diff === 'WMS') headerText = 'WHIMSIES';
                 else headerText = `LEVEL ${Utils.formatRough(val)}`;
             } else if (State.sortMode === 'pack') {
                 headerText = song.category;
@@ -1094,7 +892,8 @@ const Render = {
                     headerText = song.subgroup || 'OTHERS';
                 }
             } else if (State.sortMode === 'flat_alpha') {
-                headerText = song.subgroup || 'OTHERS';
+                const initial = song.title.trim().charAt(0).toUpperCase();
+                headerText = /[A-Z0-9]/.test(initial) ? initial : '其他';
             }
 
             if (!groups[headerText]) {
@@ -1110,7 +909,7 @@ const Render = {
             
             const header = document.createElement('div');
             header.className = 'group-header';
-            header.innerHTML = `<span>${headerText}</span>`;
+            header.innerHTML = `<span>${State.sortMode.startsWith('level') ? headerText : Utils.escapeHTML(headerText)}<small> · ${groups[headerText].length} CHARTS</small></span>`;
             header.onclick = () => groupDiv.classList.toggle('collapsed');
             groupDiv.appendChild(header);
 
@@ -1120,11 +919,16 @@ const Render = {
             groups[headerText].forEach(item => {
                 const { song, diff, val } = item;
                 const div = document.createElement('div');
-                const isActive = State.currSongId === song.id && (State.currCat === 'All Songs' ? State.currDiff === diff : true); 
+                const isActive = State.currSongId === song.id && State.currDiff === diff; 
                 const isSel = State.selectedSongs.has(song.id);
                 const isHyp = diff === 'HYP';
                 
                 div.className = `song-row ${isActive ? 'active' : ''} ${isSel ? 'selected' : ''} ${isHyp && isActive ? 'hyp-active' : ''}`;
+                div.dataset.fallback = item.fallback ? 'true' : 'false';
+                div.dataset.songId = song.id;
+                div.dataset.difficulty = diff;
+                div.dataset.entryKey = `${song.id}::${diff}`;
+                div.dataset.favorite = UserState.has(song.id) ? 'true' : 'false';
                 
                 let displayTitle = song.title;
                 if (diff === 'HYP' && song.hyperTitle) {
@@ -1132,7 +936,7 @@ const Render = {
                 } else if (diff === 'WMS' && song.difficulties.WMS_alias) {
                     displayTitle = song.difficulties.WMS_alias;
                 }
-                const valStr = (diff === 'WMS' && typeof song.difficulties.WMS === 'string') ? song.difficulties.WMS : (State.isPrecise ? Utils.formatPrecise(val) : Utils.formatRough(val));
+                const valStr = State.isPrecise ? Utils.formatPrecise(val) : Utils.formatRough(val);
                 const color = CONFIG.colors[diff] || '#888';
                 
                 div.style.setProperty('--hl-solid', color);
@@ -1140,8 +944,8 @@ const Render = {
 
                 div.innerHTML = `
                     <div class="s-meta">
-                        ${song.subgroup ? `<span class="s-subgroup">${song.subgroup}</span>` : ''}
-                        <span class="s-title">${displayTitle}</span>
+                        ${song.subgroup || item.fallback ? `<span class="s-subgroup">${Utils.escapeHTML(song.subgroup || 'OTHERS')}${item.fallback ? ' · HYP→MET FALLBACK' : ''}</span>` : ''}
+                        <span class="s-title">${Utils.escapeHTML(displayTitle)}${song.hidden ? '<small class="hidden-mark">HIDDEN</small>' : ''}${UserState.has(song.id) ? '<i class="fa-solid fa-star favorite-mark" title="Favorite"></i>' : ''}</span>
                     </div>
                     <div class="s-info">
                         <div class="rate-box">
@@ -1152,11 +956,7 @@ const Render = {
                 `;
                 div.onclick = () => {
                     if (State.batchMode) BatchOps.toggleSelection(song.id);
-                    else {
-                        State.currSongId = song.id;
-                        State.currDiff = diff; 
-                        Render.songList(); Render.songDetail();
-                    }
+                    else ChartSelection.select(item, { autoplay: true });
                 };
                 contentDiv.appendChild(div);
             });
@@ -1165,21 +965,47 @@ const Render = {
             list.appendChild(groupDiv);
         });
 
-        if (!State.batchMode && !displayItems.some(i => i.song.id === State.currSongId && (State.currCat === 'All Songs' ? i.diff === State.currDiff : true)) && displayItems.length > 0) {
-            State.currSongId = displayItems[0].song.id; 
-            State.currDiff = displayItems[0].diff;
-            setTimeout(() => { Render.songList(); Render.songDetail(); }, 0);
-        }
+        Render.songDetail();
+        DevUI.sync();
+    },
+
+    emptyDetail() {
+        const panel = document.getElementById('detailPanel');
+        panel.classList.add('empty');
+        document.getElementById('detailBg').style.backgroundImage = 'none';
+        const cover = document.getElementById('detailCover');
+        cover.removeAttribute('src');
+        cover.classList.add('image-error');
+        document.getElementById('detailTitle').innerText = 'NO CHARTS';
+        document.getElementById('detailArtist').innerText = 'ADJUST THE CURRENT FILTER';
+        document.getElementById('detailBpm').innerText = '—';
+        document.getElementById('detailPack').innerText = '—';
+        document.getElementById('detailChartCount').innerText = '0';
+        document.getElementById('detailAnnotations').replaceChildren();
+        document.getElementById('diffTabs').innerHTML = '';
+        document.getElementById('stampLabel').innerText = 'NO DATA';
+        document.getElementById('stampVal').innerText = '—';
+        document.getElementById('wmsStripe').classList.add('hidden');
+        document.getElementById('btnEditSong').disabled = true;
+        UserState.renderFavorite();
+        Preview.render();
     },
 
     songDetail() {
         const song = State.currentSong;
         if (!song) return;
+        document.getElementById('detailPanel').classList.remove('empty');
+        document.getElementById('btnEditSong').disabled = false;
         
         let dKey = State.isWhimsyCat ? 'WMS' : State.currDiff;
-        if (!song.difficulties[dKey] && !State.isWhimsyCat) {
-             dKey = song.difficulties.MET ? 'MET' : Object.keys(song.difficulties)[0];
+        if (song.difficulties[dKey] === undefined) {
+             const entry = State.isLevelCat ? ChartPolicy.levelEntries(song)[0] : ChartPolicy.ordinaryEntry(song);
+             dKey = entry?.diff || CHART_KEYS.find(key => song.difficulties[key] !== undefined);
         }
+        if (!dKey) return;
+        State.currDiff = dKey;
+        const previewKey = `${song.id}::${Preview.config.url || ''}`;
+        if (Preview.songId !== previewKey) Preview.select(song, false);
 
         const diffObj = song.difficulties;
         const dVal = diffObj[dKey];
@@ -1203,9 +1029,31 @@ const Render = {
 
         document.getElementById('detailTitle').innerText = displayTitle;
         document.getElementById('detailArtist').innerText = displayArtist;
-        document.getElementById('detailBpm').innerText = song.bpm;
-        document.getElementById('detailCover').src = displayCover;
-        document.getElementById('detailBg').style.backgroundImage = `url(${displayCover})`;
+        document.getElementById('detailBpm').innerText = song.bpm ?? '—';
+        const extra = document.getElementById('detailAnnotations');
+        const duration = dKey === 'WMS' ? (song.WMS_durationMs || song.durationMs) : song.durationMs;
+        extra.replaceChildren();
+        for (const text of [song.hidden ? 'HIDDEN' : '', dKey === 'WMS' && diffObj.WMS === '全' ? 'FULL VERSION' : '', song.alias || '', duration ? `${Math.floor(duration / 60000)}:${String(Math.floor(duration / 1000) % 60).padStart(2, '0')}` : ''].filter(Boolean)) {
+            const tag = document.createElement('span'); tag.textContent = text; extra.appendChild(tag);
+        }
+        document.getElementById('detailPack').innerText = song.category;
+        document.getElementById('detailChartCount').innerText = CHART_KEYS.filter(key => song.difficulties[key] !== undefined).length;
+        const detailCover = document.getElementById('detailCover');
+        const usableCover = Utils.isBrowserAsset(displayCover) ? displayCover : '';
+        detailCover.classList.toggle('image-error', !usableCover);
+        let triedFallback = false;
+        detailCover.onerror = () => {
+            if (!triedFallback && Utils.isBrowserAsset(song.coverFallbackUrl) && song.coverFallbackUrl !== displayCover) {
+                triedFallback = true; detailCover.src = song.coverFallbackUrl;
+                document.getElementById('detailBg').style.backgroundImage = 'none';
+                return;
+            }
+            detailCover.classList.add('image-error'); document.getElementById('detailBg').style.backgroundImage = 'none';
+        };
+        detailCover.onload = () => detailCover.classList.remove('image-error');
+        if (usableCover) detailCover.src = usableCover;
+        else detailCover.removeAttribute('src');
+        document.getElementById('detailBg').style.backgroundImage = usableCover ? `url("${String(usableCover).replaceAll('"', '%22')}")` : 'none';
 
         const stamp = document.getElementById('ratingStamp');
         stamp.style.color = color;
@@ -1218,7 +1066,7 @@ const Render = {
         else stamp.classList.remove('wms-style');
 
         let displayVal = Utils.formatRough(dVal);
-        if (dKey === 'WMS' && typeof dVal === 'string') displayVal = dVal;
+        if (dKey === 'WMS' && typeof dVal === 'string') displayVal = Utils.escapeHTML(dVal);
         else if (State.isPrecise) displayVal = Utils.formatPrecise(dVal);
 
         document.getElementById('stampLabel').innerText = labelFull;
@@ -1227,6 +1075,7 @@ const Render = {
         const tabs = document.getElementById('diffTabs');
         tabs.innerHTML = '';
         ['NUL', 'PHM', 'DEC', 'MET', 'HYP', 'WMS'].forEach(k => {
+            if (State.isWhimsyCat && k !== 'WMS') return;
             if (song.difficulties[k] === undefined && (k === 'HYP' || k === 'WMS')) return;
             if (song.difficulties[k] === undefined) return;
 
@@ -1240,31 +1089,40 @@ const Render = {
             
             let tabVal = song.difficulties[k];
             let tabValStr = Utils.formatRough(tabVal);
-            if (k === 'WMS' && typeof tabVal === 'string') tabValStr = tabVal; 
+            if (k === 'WMS' && typeof tabVal === 'string') tabValStr = Utils.escapeHTML(tabVal);
 
             btn.innerHTML = `
                 <span class="d-tab-name">${k}</span>
                 <span class="d-tab-val">${tabValStr}</span>
             `;
-            btn.onclick = () => { State.currDiff = k; Render.songDetail(); Render.songList(); };
+            btn.onclick = () => {
+                if (State.isLevelCat) {
+                    State.currDiff = k;
+                    Render.songList();
+                } else if (!State.isWhimsyCat) {
+                    DifficultyFilter.select(k);
+                }
+            };
             tabs.appendChild(btn);
         });
         
         document.querySelector('.jacket-wrap').style.setProperty('--r', Utils.randomTilt());
         document.getElementById('wmsStripe').classList.toggle('hidden', dKey !== 'WMS');
+        UserState.renderFavorite();
+        Preview.render();
     }
 };
 
 const CatOps = {
     move(cat, dir) { 
-        if (cat === 'All Songs' || cat === 'Original' || cat === 'WHIMSY') return;
+        if (cat === 'All Songs' || cat === 'Favorites' || cat === 'Level' || cat === 'Original' || cat === 'WHIMSY') return;
         const metaArr = State.meta.catOrder;
         const metaIdx = metaArr.indexOf(cat);
         if (metaIdx > -1) {
             const swapIdx = metaIdx + dir;
             if (swapIdx >= 0 && swapIdx < metaArr.length) {
                 const targetCat = metaArr[swapIdx];
-                if (targetCat !== 'All Songs' && targetCat !== 'Original' && targetCat !== 'WHIMSY') {
+                if (!['All Songs', 'Favorites', 'Level', 'Original', 'WHIMSY'].includes(targetCat)) {
                     [metaArr[metaIdx], metaArr[swapIdx]] = [metaArr[swapIdx], metaArr[metaIdx]];
                     DB.save(); Render.categoryGrid();
                 }
@@ -1273,7 +1131,7 @@ const CatOps = {
     },
     edit(cat) { CatEditor.open(cat); },
     delete(cat) {
-        if (cat === 'All Songs' || cat === 'Original') return alert("Protected.");
+        if (cat === 'All Songs' || cat === 'Favorites' || cat === 'Level' || cat === 'Original' || cat === 'WHIMSY') return alert("Protected.");
         if (State.songs.some(s => s.category === cat)) return alert("Not empty.");
         if (confirm(`Delete ${cat}?`)) {
             State.meta.catOrder = State.meta.catOrder.filter(c => c !== cat);
@@ -1304,16 +1162,21 @@ const CatEditor = {
         if(!term) return;
         const btn = document.querySelector('#catEditModal .btn-magic i');
         btn.className = "fa-solid fa-spinner fa-spin";
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
         try {
-            const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=software&limit=1`);
+            const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=software&limit=10`, { signal: controller.signal });
+            if (!res.ok) throw new Error(`HTTP_${res.status}`);
             const data = await res.json();
-            if (data.resultCount > 0) {
-                document.getElementById('catCover').value = data.results[0].artworkUrl512;
+            const normalize = value => String(value).toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+            const match = data.results?.find(app => normalize(app.trackName) === normalize(term));
+            if (match?.artworkUrl512) {
+                document.getElementById('catCover').value = match.artworkUrl512;
             } else {
                 alert("No game icon found. Try web search.");
             }
         } catch { alert("Search error."); }
-        finally { btn.className = "fa-solid fa-gamepad"; }
+        finally { clearTimeout(timeout); btn.className = "fa-solid fa-gamepad"; }
     },
     delete() { CatOps.delete(this.targetCat); this.close(); },
     save(e) {
@@ -1321,6 +1184,7 @@ const CatEditor = {
         const oldName = document.getElementById('oldCatName').value;
         const newName = document.getElementById('catName').value;
         if(!newName) return;
+        if (['All Songs', 'Favorites', 'Level', 'WHIMSY'].includes(newName) && newName !== oldName) return alert('This archive name is reserved.');
 
         // Update Name
         if (newName !== oldName) {
@@ -1377,20 +1241,22 @@ const Editor = {
     mode: 'song', targetId: null,
     init() {
         Juni.init();
+        PackScroller.init();
         document.getElementById('devToggle').onclick = () => {
             State.devMode = !State.devMode;
-            document.getElementById('devToggle').classList.toggle('active', State.devMode);
             const scene = document.querySelector('.scene.active').id;
             if(scene === 'scene-menu') {
-                document.querySelector('.char-controls').classList.toggle('hidden', !State.devMode);
                 Juni.applyConfig();
             }
             if(scene === 'scene-category') Render.categoryGrid();
             if(scene === 'scene-music') Render.songList();
+            DevUI.sync();
         };
 
         // Modal triggers
-        document.getElementById('btnEditSong').onclick = () => this.openSongModal(State.currentSong);
+        document.getElementById('btnEditSong').onclick = () => { if (State.currentSong) this.openSongModal(State.currentSong); };
+        document.getElementById('favoriteToggle').onclick = () => UserState.toggle();
+        document.getElementById('randomSelect').onclick = () => RandomSelect.pick();
         document.getElementById('editForm').onsubmit = (e) => this.save(e);
         document.getElementById('catForm').onsubmit = (e) => CatEditor.save(e);
         
@@ -1403,7 +1269,7 @@ const Editor = {
             reader.onload = (ev) => {
                 try {
                     const data = JSON.parse(ev.target.result);
-                    if(data.songs) State.songs = data.songs;
+                    if(data.songs) State.songs = DB.normalizeSongs(data.songs);
                     if(data.meta) State.meta = DB.buildMeta(data.meta);
                     DB.save();
                     location.reload();
@@ -1412,49 +1278,14 @@ const Editor = {
             reader.readAsText(file);
         };
         
-        // JS Export Logic
-        document.getElementById('btnExportJS').onclick = async () => {
-            try {
-                // Fetch the current script.js content
-                const response = await fetch('script.js');
-                if (!response.ok) throw new Error("Cannot fetch script.js");
-                let jsContent = await response.text();
-
-                // Replace SEED_SONGS
-                const songsJson = JSON.stringify(State.songs, null, 4);
-                const metaJson = JSON.stringify(State.meta, null, 4);
-                // Regex to find: const SEED_SONGS = [ ... ];
-                // We use a simplified replacement assuming standard formatting
-                // Or easier: replace the whole block if we identify start/end
-                
-                // Fallback approach: Create a new JS file string that overrides DB init
-                // But user wants "script.js". Let's try to string replace.
-                
-                // Construct replacement string
-                const newSeedBlock = `const SEED_SONGS = ${songsJson};`;
-                const newMetaBlock = `const SEED_META = ${metaJson};`;
-                
-                // Use regex to replace the variable definition
-                // Matches: const SEED_SONGS = [ (anything until ];)
-                const regex = /const SEED_SONGS\s*=\s*\[[\s\S]*?\];/;
-                const metaRegex = /const SEED_META\s*=\s*[\s\S]*?;\n\nconst DB/;
-                
-                if (regex.test(jsContent) && metaRegex.test(jsContent)) {
-                    jsContent = jsContent.replace(regex, newSeedBlock);
-                    jsContent = jsContent.replace(metaRegex, `${newMetaBlock}\n\nconst DB`);
-                    
-                    // Download
-                    const blob = new Blob([jsContent], { type: 'text/javascript' });
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = 'script.js';
-                    a.click();
-                } else {
-                    alert("Could not find SEED_SONGS / SEED_META block in script.js to replace.");
-                }
-            } catch (e) {
-                alert("Export failed: " + e.message + "\n(This feature requires running on a local server)");
-            }
+        // Export the generated data bundle without altering the application source.
+        document.getElementById('btnExportJS').onclick = () => {
+            const seed = { songs: State.songs, meta: State.meta };
+            const blob = new Blob([`globalThis.QUALITHM_SEED = ${JSON.stringify(seed, null, 2)};\n`], { type: 'text/javascript' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url; link.download = 'seed-fallback.js'; link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         };
 
         document.getElementById('btnDelete').onclick = () => this.delete();
@@ -1473,17 +1304,26 @@ const Editor = {
             document.getElementById('coverWMS').disabled = !enabled;
         };
         document.getElementById('sortToggle').onclick = () => {
-            if (State.sortMode === 'level_desc') State.sortMode = 'level_asc';
-            else if (State.sortMode === 'level_asc') State.sortMode = 'pack';
-            else if (State.sortMode === 'pack') State.sortMode = 'subgroup'; 
-            else if (State.sortMode === 'subgroup') State.sortMode = 'flat_alpha';
-            else State.sortMode = 'level_desc';
+            if (State.isLevelCat) {
+                State.sortMode = State.sortMode === 'level_desc' ? 'level_asc' : 'level_desc';
+            } else {
+                const modes = ['subgroup', 'pack', 'flat_alpha', 'level_desc', 'level_asc'];
+                State.sortMode = modes[(modes.indexOf(State.sortMode) + 1) % modes.length];
+            }
             Render.songList();
+        };
+        document.getElementById('quickPackSelect').onchange = event => QuickPack.select(event.target.value);
+        document.getElementById('quickPackPrev').onclick = () => QuickPack.step(-1);
+        document.getElementById('quickPackNext').onclick = () => QuickPack.step(1);
+        document.getElementById('chartFilterOptions').onclick = event => {
+            const button = event.target.closest('[data-diff]');
+            if (button && !State.isLevelCat && !State.isWhimsyCat) DifficultyFilter.select(button.dataset.diff);
         };
     },
     addCategory() {
         const name = prompt("New Category Name:");
-        if(name && !State.meta.catOrder.includes(name)) {
+        const reserved = ['All Songs', 'Favorites', 'Level', 'WHIMSY'];
+        if(name && !reserved.includes(name) && !State.meta.catOrder.includes(name)) {
             State.meta.catOrder.push(name);
             State.meta.catMeta[name] = {};
             DB.save(); Render.categoryGrid();
@@ -1498,6 +1338,7 @@ const Editor = {
         if(url) { State.meta.juniUrl = url; DB.save(); Juni.applyConfig(); }
     },
     openSongModal(s) {
+        if (!s) return;
         this.targetId = s.id;
         document.getElementById('editModal').classList.add('open');
         document.getElementById('editTitle').value = s.title;
@@ -1505,6 +1346,14 @@ const Editor = {
         document.getElementById('editCover').value = s.coverUrl;
         document.getElementById('editBpm').value = s.bpm;
         document.getElementById('editSubgroup').value = s.subgroup || '';
+        document.getElementById('editAlias').value = s.alias || '';
+        document.getElementById('editPackOrder').value = s.packOrder ?? '';
+        document.getElementById('editHidden').checked = s.hidden === true;
+        document.getElementById('editWMSPreviewUrl').value = s.WMS_previewUrl || '';
+        document.getElementById('editPreviewUrl').value = s.preview?.url || '';
+        document.getElementById('editPreviewStart').value = s.preview?.start || 0;
+        document.getElementById('editPreviewEnd').value = s.preview?.end || '';
+        this.previewCandidate = null;
         
         ['NUL', 'PHM', 'DEC', 'MET'].forEach(k => document.getElementById(`val${k}`).value = s.difficulties[k] || '');
         
@@ -1541,8 +1390,34 @@ const Editor = {
             s.title = document.getElementById('editTitle').value;
             s.artist = document.getElementById('editArtist').value;
             s.coverUrl = document.getElementById('editCover').value;
-            s.bpm = parseInt(document.getElementById('editBpm').value);
+            const bpmInput = document.getElementById('editBpm').value.trim();
+            s.bpm = bpmInput === '' ? null : Number.isFinite(Number(bpmInput)) ? Number(bpmInput) : bpmInput;
             s.subgroup = document.getElementById('editSubgroup').value;
+            s.alias = document.getElementById('editAlias').value.trim();
+            s.hidden = document.getElementById('editHidden').checked;
+            const packOrder = Number(document.getElementById('editPackOrder').value);
+            if (Number.isSafeInteger(packOrder) && packOrder > 0) s.packOrder = packOrder;
+            else delete s.packOrder;
+            const wmsPreview = document.getElementById('editWMSPreviewUrl').value.trim();
+            if (wmsPreview !== (s.WMS_previewUrl || '')) delete s.WMS_previewSourceUrl;
+            if (wmsPreview || Object.hasOwn(s, 'WMS_previewUrl')) s.WMS_previewUrl = wmsPreview;
+            const previewStart = Math.max(0, parseFloat(document.getElementById('editPreviewStart').value) || 0);
+            const rawPreviewEnd = parseFloat(document.getElementById('editPreviewEnd').value);
+            const previousPreviewUrl = s.preview?.url || '';
+            s.preview = {
+                ...(s.preview || {}),
+                url: document.getElementById('editPreviewUrl').value.trim(),
+                start: previewStart,
+                end: Number.isFinite(rawPreviewEnd) && rawPreviewEnd > previewStart ? rawPreviewEnd : null
+            };
+            delete s.previewUrl; delete s.previewStart; delete s.previewEnd;
+            if (this.previewCandidate && s.preview.url === this.previewCandidate.previewUrl) {
+                s.preview.source = 'iTunes';
+                s.preview.sourceUrl = this.previewCandidate.trackViewUrl || '';
+            } else if (s.preview.url !== previousPreviewUrl) {
+                delete s.preview.source;
+                delete s.preview.sourceUrl;
+            }
             
             ['NUL', 'PHM', 'DEC', 'MET'].forEach(k => {
                 const v = parseFloat(document.getElementById(`val${k}`).value);
@@ -1583,44 +1458,85 @@ const Editor = {
                 delete s.difficulties.WMS_cover;
             }
 
-            DB.save(); Render.songList(); Render.songDetail(); Editor.close();
+            DB.save(); Preview.stop(true); Preview.songId = null; Render.songList(); Render.songDetail(); Editor.close();
         }
     },
     addSong() {
-        const cat = State.currCat === 'All Songs' ? 'Original' : State.currCat;
+        const cat = ['All Songs', 'Favorites', 'Level', 'WHIMSY'].includes(State.currCat) ? 'Original' : State.currCat;
         const newSong = fillLowDiffs({ 
             id: crypto.randomUUID(), title: 'NEW', artist: '', category: cat, 
-            difficulties: {...CONFIG.defaultDifficulties} 
+            difficulties: {...CONFIG.defaultDifficulties}, preview: { url: '', start: 0, end: null }
         });
         State.songs.push(newSong); DB.save(); this.openSongModal(newSong);
     },
     async magicSearch() {
-        const term = document.getElementById('editTitle').value;
-        const artist = document.getElementById('editArtist').value;
-        if(!term) return alert("Enter a title first!");
-        
-        const query = `${term} ${artist}`.trim();
-        const btn = document.querySelector('.btn-magic i');
-        btn.className = "fa-solid fa-spinner fa-spin"; 
-
+        const btn = document.querySelector('#editModal .f-group .btn-magic i');
+        btn.className = "fa-solid fa-spinner fa-spin";
         try {
-            const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=1`);
-            const data = await res.json();
-            if (data.resultCount > 0) {
-                const track = data.results[0];
-                const bigCover = track.artworkUrl100.replace('100x100bb', '600x600bb');
-                document.getElementById('editCover').value = bigCover;
-                if(!artist) document.getElementById('editArtist').value = track.artistName;
-            } else {
-                document.getElementById('editCover').value = `https://placehold.co/400x400/333/fff?text=${encodeURIComponent(term.substr(0,4))}`;
-                alert("No match found. Placeholder set.");
-            }
-        } catch (e) {
-            console.error(e);
-            alert("Search failed.");
+            const candidates = await this.itunesSearch();
+            const track = this.chooseCandidate(candidates, 'Select cover candidate');
+            if (!track) return;
+            if (track.artworkUrl100) document.getElementById('editCover').value = track.artworkUrl100.replace('100x100bb', '600x600bb');
+            if (!document.getElementById('editArtist').value && track.artistName) document.getElementById('editArtist').value = track.artistName;
+        } catch (error) {
+            alert(navigator.onLine ? 'No reliable match found. Existing value was kept.' : 'Offline. Use a local relative path or retry later.');
         } finally {
-            btn.className = "fa-solid fa-wand-magic-sparkles"; 
+            btn.className = "fa-solid fa-wand-magic-sparkles";
         }
+    },
+    async magicPreviewSearch() {
+        const icon = document.querySelector('#btnPreviewMagic i');
+        icon.className = 'fa-solid fa-spinner fa-spin';
+        document.getElementById('btnPreviewMagic').disabled = true;
+        try {
+            const candidates = await this.itunesSearch();
+            const track = this.chooseCandidate(candidates, 'Select preview candidate');
+            if (!track?.previewUrl) return alert('This candidate has no preview audio.');
+            document.getElementById('editPreviewUrl').value = track.previewUrl;
+            document.getElementById('editPreviewStart').value = 0;
+            document.getElementById('editPreviewEnd').value = '';
+            this.previewCandidate = track;
+        } catch (error) {
+            alert(navigator.onLine ? 'Preview lookup failed. Your current URL was kept.' : 'Offline. You can still use a local audio path.');
+        } finally {
+            icon.className = 'fa-solid fa-music';
+            document.getElementById('btnPreviewMagic').disabled = false;
+        }
+    },
+    supplementPreviews() {
+        const entries = DB.previewSupplements(State.songs);
+        if (!entries.length) return alert('没有可补全的空白试听。已有 URL、区间或修改过曲名／作者的曲目不会覆盖。');
+        if (!confirm(`为 ${entries.length} 首曲目补全已核对的 Apple 试听？仅写入空白试听，不修改其他歌曲数据。当前编辑器中尚未保存的试听输入会保留。`)) return;
+        for (const { song, seed } of entries) {
+            song.preview = { ...seed.preview };
+            song.previewEdition = seed.previewEdition || '';
+        }
+        DB.save();
+        const current = entries.find(entry => entry.song.id === this.targetId);
+        if (current && !document.getElementById('editPreviewUrl').value.trim()) {
+            document.getElementById('editPreviewUrl').value = current.song.preview.url;
+            document.getElementById('editPreviewStart').value = 0;
+            document.getElementById('editPreviewEnd').value = '';
+        }
+        Preview.stop(true); Preview.songId = null; Render.songDetail();
+        alert(`已补全 ${entries.length} 首试听。`);
+    },
+    async itunesSearch() {
+        const title = document.getElementById('editTitle').value.trim();
+        const artist = document.getElementById('editArtist').value.trim();
+        if (!title) throw new Error('TITLE_REQUIRED');
+        const song = State.songs.find(s => s.id === this.targetId);
+        const matches = await MetadataLookup.search({ title, artist, category: song?.category, alias: song?.alias });
+        if (!matches.length) throw new Error('NO_RELIABLE_MATCH');
+        return matches;
+    },
+    chooseCandidate(candidates, heading) {
+        if (!candidates?.length) return null;
+        const lines = candidates.map((track, index) => `${index + 1}. ${track.trackName} — ${track.artistName}${track.collectionName ? ` / ${track.collectionName}` : ''}`);
+        const selected = prompt(`${heading}\n\n${lines.join('\n')}\n\nEnter 1-${candidates.length}; Cancel keeps existing data.`, '1');
+        if (selected === null) return null;
+        const index = Number(selected) - 1;
+        return candidates[index] || null;
     },
     webSearch() {
         const term = document.getElementById('editTitle').value;
@@ -1632,6 +1548,8 @@ const Editor = {
 };
 
 document.getElementById('themeToggle').onclick = Utils.toggleTheme;
+document.getElementById('audioToggle').onclick = () => Preview.toggleMute();
+document.getElementById('previewToggle').onclick = () => Preview.toggle();
 document.getElementById('dlDataBtn').onclick = Utils.exportData;
 document.getElementById('preciseToggle').onclick = function() {
     State.isPrecise = !State.isPrecise;
@@ -1641,6 +1559,8 @@ document.getElementById('preciseToggle').onclick = function() {
 document.getElementById('searchInput').addEventListener('input', () => Render.songList());
 window.addEventListener('DOMContentLoaded', async () => {
     ViewportManager.init();
+    Preview.init();
+    UserState.init();
     await DB.init();
     Editor.init();
     SceneManager.switch('menu');
