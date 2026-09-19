@@ -55,6 +55,8 @@ const sandbox = {
   }
 };
 vm.createContext(sandbox);
+vm.runInContext(fs.readFileSync(path.join(root, 'assets/vendor/chroma-3.2.0.min.js'), 'utf8'), sandbox);
+vm.runInContext(fs.readFileSync(path.join(root, 'palette.js'), 'utf8'), sandbox);
 vm.runInContext(fs.readFileSync(path.join(root, 'seed-fallback.js'), 'utf8'), sandbox);
 vm.runInContext(`${libraryOnly}\nglobalThis.__logic = { State, DB, Utils, ChartPolicy, CHART_KEYS, DevUI, ChartSelection, Render, Preview };`, sandbox);
 

@@ -12,5 +12,6 @@ jobs:
           node-version: '22'
       - run: node --check script.js
       - run: node --check metadata-lookup.js
+      - run: node --check palette.js
       - run: node tools/sync-seed.mjs --check
       - run: node tests/release-check.cjs

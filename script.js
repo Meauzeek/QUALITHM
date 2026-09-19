@@ -4,7 +4,8 @@
 const CONFIG = {
     colors: {
         NUL: '#ff7f50', PHM: '#d4af37', DEC: '#2e8b57',
-        MET: '#8a2be2', HYP: '#9270d6', WMS: '#888888'
+        get MET() { return globalThis.QualithmPalette?.metForTheme(document.body?.getAttribute('data-theme')) || (document.body?.getAttribute('data-theme') === 'dark' ? '#516ef2' : '#465fe2'); },
+        HYP: '#9270d6', WMS: '#888888'
     },
     labels: {
         NUL: 'NULL', PHM: 'PHANTOM', DEC: 'DECAY', 
@@ -45,6 +46,8 @@ const Utils = {
     toggleTheme() {
         const body = document.body;
         body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        globalThis.QualithmPalette?.applyTheme(body.getAttribute('data-theme'));
+        if (State.currentSong) { Render.songList(); Render.songDetail(); }
     },
     exportData() {
         const blob = new Blob([JSON.stringify({songs: State.songs, meta: State.meta}, null, 2)], { type: 'application/json' });

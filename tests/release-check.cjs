@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const { sandbox, State, DB, Utils, ChartPolicy, Preview, data } = require('./logic-smoke.cjs');
 const { rank } = require('../metadata-lookup.js');
+require('./palette-check.cjs');
 
 async function main() {
   const added = data.songs.filter(s => s.id.startsWith('collab-'));

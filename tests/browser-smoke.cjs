@@ -59,11 +59,34 @@ async function main() {
       await page.locator('.song-row[data-song-id="collab-rot-suimori"]').click();
       assert.equal(await page.locator('.d-tab.active').getAttribute('data-type'), 'HYP');
       assert(await page.locator('#stampVal').evaluate(e => e.closest('.rate-stamp').classList.contains('hyp-style')));
+      const stampStyle = await page.locator('.rate-stamp.hyp-style').evaluate(e => {
+        const s = getComputedStyle(e);
+        return { widths: [s.borderTopWidth, s.borderRightWidth, s.borderBottomWidth, s.borderLeftWidth], outline: s.outlineStyle, background: s.backgroundImage, shadow: s.boxShadow };
+      });
+      assert.equal(new Set(stampStyle.widths).size, 1, 'HYP stamp borders must have equal widths');
+      assert.equal(stampStyle.outline, 'none', 'No jagged extra outline');
+      assert(!stampStyle.shadow.includes('inset'), 'No doubled top border');
+      assert(stampStyle.background.includes('rgba(226, 232, 255, 0.72)'), 'Daytime corner must reveal purple underneath');
+      assert(stampStyle.background.includes('90.5%'), 'Corner keeps its parallel cutout');
+      assert.equal(await page.locator('.d-tab[data-type="MET"]').evaluate(e => e.style.getPropertyValue('--col-ref')), '#465fe2');
       if (process.env.QUALITHM_SCREENSHOTS) {
         await page.locator('#detailTitle').scrollIntoViewIfNeeded();
         await page.screenshot({ animations: 'disabled', path: path.join(process.env.QUALITHM_SCREENSHOTS, `hyp-${viewport.width}.png`) });
-        await page.locator('#themeToggle').click();
+      }
+      await page.locator('#themeToggle').click();
+      const nightCorner = await page.locator('.rate-stamp.hyp-style').evaluate(e => getComputedStyle(e).backgroundImage);
+      assert(nightCorner.includes('rgb(226, 232, 255)'), 'Nighttime corner retains its brighter contrast');
+      assert.equal(await page.locator('.d-tab[data-type="MET"]').evaluate(e => e.style.getPropertyValue('--col-ref')), '#516ef2');
+      if (process.env.QUALITHM_SCREENSHOTS) {
         await page.screenshot({ animations: 'disabled', path: path.join(process.env.QUALITHM_SCREENSHOTS, `hyp-dark-${viewport.width}.png`) });
+      }
+      await page.locator('#themeToggle').click();
+      if (process.env.QUALITHM_SCREENSHOTS) {
+        await page.locator('#chartFilterOptions [data-diff="MET"]').click();
+        await page.locator('.song-row[data-song-id="collab-rot-suimori"]').click();
+        await page.screenshot({ animations: 'disabled', path: path.join(process.env.QUALITHM_SCREENSHOTS, `met-${viewport.width}.png`) });
+        await page.locator('#themeToggle').click();
+        await page.screenshot({ animations: 'disabled', path: path.join(process.env.QUALITHM_SCREENSHOTS, `met-dark-${viewport.width}.png`) });
         await page.locator('#themeToggle').click();
       }
       await page.locator('#quickPackSelect').selectOption('Cytus II');

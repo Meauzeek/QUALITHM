@@ -8,6 +8,10 @@ QUALITHM 是音游企划展示，不代表与页面涉及的游戏、作曲者�
 - Font Awesome Free 6.4.0：Copyright © 2023 Fonticons, Inc.；字体适用 SIL OFL 1.1，CSS 适用 MIT。完整原始许可见 [LICENSE.txt](assets/fontawesome/LICENSE.txt)，来源为 [Font Awesome 6.4.0](https://github.com/FortAwesome/Font-Awesome/tree/6.4.0)。品牌图标仍属相应商标权人。
 - Noto Sans SC：通过 Google Fonts 远程样式加载；网络不可用时使用系统中文字体，英文 Rajdhani 已本地化。
 
+## 配色工具
+
+Chroma.js 3.2.0（Gregor Aisch）随站点本地分发，采用 BSD-3-Clause；内含 ColorBrewer 配色数据采用 Apache-2.0。原始声明见 [chroma-LICENSE.txt](assets/vendor/chroma-LICENSE.txt)，Apache 完整许可见 [Apache-2.0.txt](assets/vendor/Apache-2.0.txt)。固定版本的浏览器发行文件来自官方文档链接的 [npm / unpkg 发行包](https://unpkg.com/chroma-js@3.2.0/dist/chroma.min.cjs)。本项目使用其 OKLCH 与 contrast 功能调整 MET 色彩，未修改库的实现。
+
 ## 音乐与图片
 
 仓库不包含完整版权歌曲或下载的试听音频。官方发行页链接、API 元数据和曲绘 URL 不构成对歌曲、图片、角色或商标的使用授权。
