@@ -6,17 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>QUALITHM: ENDFIELD PROTOCOL V8.4.0</title>
+    <title>QUALITHM</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23111111'/%3E%3Cpath d='M14 11h36v34L37 56H14z' fill='%23fff'/%3E%3Cpath d='M24 20h16v21h-7l8 8h-9l-8-8z' fill='%23111'/%3E%3C/svg%3E">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=8.4.0-hyp.3">
+    <link rel="stylesheet" href="style.css?v=8.16.4">
+    <link rel="stylesheet" href="frontend.css?v=8.16.4">
 </head>
-<body>
+<body data-theme="light">
 
     <!-- Background System -->
     <div class="bg-system">
         <div class="bg-base"></div>
+        <div class="glass-landscape" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="geometry-space" aria-hidden="true">
+            <div class="geometry-cluster">
+                <div class="geometry-cube"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <div class="geometry-cube cube-inner"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <div class="geometry-cube cube-core"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
+            <div class="geometry-cluster geometry-distant">
+                <div class="geometry-cube"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <div class="geometry-cube cube-inner"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
+        </div>
         <div class="bg-lines-group">
             <div class="line l1"></div>
             <div class="line l2"></div>
@@ -29,7 +42,6 @@
     <!-- System UI -->
     <div class="sys-corner tl" id="mainSysInfo">
         <div class="sys-time" id="sysTime">00:00</div>
-        <div class="sys-ver">SYS: STABLE // V.8.4.0</div>
     </div>
     
     <div class="sys-corner br-ctrl">
@@ -41,9 +53,9 @@
         <button class="icon-btn" id="btnExportJS" title="Export offline seed"><i class="fa-brands fa-js"></i></button>
     </div>
     
-    <div class="dev-badge" id="devToggle">
+    <button type="button" class="dev-badge" id="devToggle" aria-label="切换调试编辑模式" aria-pressed="false">
         <i class="fa-solid fa-terminal"></i> <span>DEBUG</span>
-    </div>
+    </button>
 
     <!-- MAIN APP CONTAINER -->
     <div id="app">
@@ -54,13 +66,18 @@
                     <div class="brand-group">
                         <h1 class="glitch-logo" data-text="QUALITHM">QUALITHM</h1>
                         <div class="sep-bar"></div>
-                        <p class="sub-text">PROJECT FADING WORLD // RECONSTRUCTION</p>
+                        <p class="sub-text">v8.16.4</p>
                     </div>
+                    <div class="home-actions">
                     <button class="btn-start-large" onclick="SceneManager.switch('category')">
-                        <span class="t-main">SYSTEM LINK</span>
-                        <span class="t-sub">ESTABLISH CONNECTION</span>
+                        <span class="t-main" data-i18n="archive">MUSIC ARCHIVE</span>
                         <i class="fa-solid fa-caret-right icon-arrow"></i>
                     </button>
+                    <div class="home-secondary">
+                        <button type="button" class="home-settings" id="openSettings"><i class="fa-solid fa-sliders" aria-hidden="true"></i><span data-i18n="settings">SETTINGS</span></button>
+                        <button type="button" class="home-exit" id="exitGame"><i class="fa-solid fa-power-off" aria-hidden="true"></i><span data-i18n="exit">EXIT</span></button>
+                    </div>
+                    </div>
                 </div>
                 <div class="menu-char-area">
                     <div class="char-wrapper" id="charContainer">
@@ -97,10 +114,10 @@
         <section id="scene-category" class="scene">
             <div class="nav-bar">
                 <button class="btn-tech-plain" onclick="SceneManager.switch('menu')">
-                    <i class="fa-solid fa-chevron-left"></i> TERMINATE
+                    <i class="fa-solid fa-chevron-left"></i> <span data-i18n="back">RETURN</span>
                 </button>
                 <div class="nav-info">
-                    <h2>ARCHIVE SELECTION</h2>
+                    <h2 data-i18n="archives">MUSIC ARCHIVES</h2>
                     <span id="catCount">LOADING...</span>
                 </div>
                 <div class="nav-actions">
@@ -114,7 +131,7 @@
             </div>
             <div class="pack-scroll-controls" aria-label="曲包浏览控制">
                 <button type="button" id="packScrollPrev" aria-label="上一个曲包"><i class="fa-solid fa-chevron-left"></i></button>
-                <div class="pack-position"><b id="packPosition">01 / 01</b><span>SCROLL / SWIPE TO BROWSE</span></div>
+                <div class="pack-position"><b id="packPosition">01 / 01</b></div>
                 <button type="button" id="packScrollNext" aria-label="下一个曲包"><i class="fa-solid fa-chevron-right"></i></button>
             </div>
         </section>
@@ -124,15 +141,15 @@
             <div class="music-grid">
                 <div class="ctrl-row glass-panel">
                     <button class="btn-tech-plain" onclick="SceneManager.switch('category')">
-                        <i class="fa-solid fa-chevron-left"></i> RETURN
+                        <i class="fa-solid fa-chevron-left"></i> <span data-i18n="back">RETURN</span>
                     </button>
-                    <div class="search-bar">
+                    <label class="search-bar" for="searchInput">
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="text" id="searchInput" placeholder="SEARCH...">
-                    </div>
+                    </label>
                     <div class="quick-pack-nav" aria-label="Quick Pack Select">
                         <button type="button" id="quickPackPrev" aria-label="Previous Pack"><i class="fa-solid fa-chevron-left"></i></button>
-                        <label><span>PACK</span><select id="quickPackSelect"></select></label>
+                        <button type="button" id="quickPackSelect" class="pack-picker-trigger" aria-haspopup="listbox" aria-controls="quickPackMenu" aria-expanded="false"><span id="quickPackName">Original</span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
                         <button type="button" id="quickPackNext" aria-label="Next Pack"><i class="fa-solid fa-chevron-right"></i></button>
                     </div>
                     <div class="tool-group">
@@ -149,13 +166,12 @@
                 </div>
 
                 <div class="chart-filter-bar" id="chartFilterBar">
-                    <span class="filter-label">CHART FILTER</span>
                     <div class="chart-filter-options" id="chartFilterOptions">
                         <button type="button" data-diff="NUL">NUL</button>
                         <button type="button" data-diff="PHM">PHM</button>
                         <button type="button" data-diff="DEC">DEC</button>
                         <button type="button" data-diff="MET" class="active">MET</button>
-                        <button type="button" data-diff="HYP">HYP <small>→ MET</small></button>
+                        <button type="button" data-diff="HYP" title="优先 HYP，无 HYP 时显示 MET">HYP</button>
                         <button type="button" data-diff="WMS">WMS</button>
                     </div>
                     <span class="filter-help" id="chartFilterHelp">MET CHARTS ONLY</span>
@@ -178,10 +194,10 @@
                                 <span class="cat-sub" id="listCatSub">SUBTITLE</span>
                             </div>
                             <div class="header-tools">
-                                <button class="btn-mini-tool dev-only hidden" onclick="BatchOps.toggle(true)">
+                                <button type="button" class="btn-mini-tool dev-only hidden" onclick="BatchOps.toggle(true)" title="批量编辑曲目" aria-label="批量编辑曲目">
                                     <i class="fa-solid fa-list-check"></i>
                                 </button>
-                                <button class="btn-mini-add dev-only hidden" onclick="Editor.addSong()">
+                                <button type="button" class="btn-mini-add dev-only hidden" onclick="Editor.addSong()" title="新增曲目" aria-label="新增曲目">
                                     <i class="fa-solid fa-plus"></i>
                                 </button>
                             </div>
@@ -192,36 +208,38 @@
                     <div class="detail-zone" id="detailPanel">
                         <div class="detail-bg" id="detailBg"></div>
                         <div class="detail-content-layer">
+                            <article class="song-dossier" id="songDossier" aria-labelledby="detailTitle">
+                            <div class="jacket-stage">
+                            <div class="jacket-sheet">
                             <div class="jacket-wrap tilted">
                                 <div class="jacket-box">
                                     <img id="detailCover" class="filtered-img" src="" alt="Cover">
                                     <div class="wms-stripe hidden" id="wmsStripe">WHIMSY</div>
                                 </div>
-                                <div class="rate-stamp" id="ratingStamp">
-                                    <div class="r-label" id="stampLabel">META</div>
-                                    <div class="r-val" id="stampVal">14+</div>
-                                </div>
+                            </div>
+                            <div class="chart-name-band">
+                                <div class="chart-name" id="stampLabel">META</div>
+                                <div class="rating-recess" id="ratingStamp" aria-label="谱面等级"><span id="stampVal">14+</span></div>
+                            </div>
+                            </div>
                             </div>
 
                             <div class="meta-wrap">
                                 <h1 id="detailTitle">Title</h1>
                                 <h2 id="detailArtist">Artist</h2>
                                 <div id="detailAnnotations" class="detail-annotations"></div>
-                                <div class="diff-tabs" id="diffTabs"></div>
                                 <div class="info-stats">
                                     <span>BPM <b id="detailBpm">0</b></span>
-                                    <span>PACK <b id="detailPack">—</b></span>
-                                    <span>CHARTS <b id="detailChartCount">0</b></span>
+                                    <span hidden>PACK <b id="detailPack">—</b></span>
+                                    <span><span data-selection-text="chartCountLabel">CHARTS</span> <b id="detailChartCount">0</b></span>
                                 </div>
-                                <div class="preview-control">
-                                    <button type="button" id="previewToggle" class="preview-toggle"><i class="fa-solid fa-play"></i><span>PREVIEW</span></button>
-                                    <div class="preview-track"><i id="previewProgress"></i></div>
-                                    <span id="previewStatus">NO AUDIO</span>
-                                    <a id="previewSource" class="preview-source hidden" href="#" target="_blank" rel="noopener noreferrer">SOURCE ↗</a>
-                                </div>
+                            </div>
+                            </article>
+                            <div class="diff-tabs" id="diffTabs" aria-label="选择谱面难度"></div>
+                            <div class="meta-wrap song-controls">
                                 <div class="act-btns">
                                     <button type="button" class="btn-favorite" id="favoriteToggle" title="Favorite" aria-label="收藏当前曲目" aria-pressed="false"><span class="favorite-glyph" aria-hidden="true">☆</span></button>
-                                    <button class="btn-play">INITIATE</button>
+                                    <button type="button" class="btn-play" id="playButton" disabled title="游玩模块待接入" aria-label="INITIATE，游玩模块待接入">INITIATE</button>
                                     <button type="button" class="btn-edit dev-only hidden" id="btnEditSong" title="Edit current song" aria-label="编辑当前曲目"><i class="fa-solid fa-pen"></i></button>
                                 </div>
                             </div>
@@ -230,6 +248,22 @@
                 </div>
             </div>
         </section>
+    </div>
+
+    <div id="quickPackMenu" class="pack-picker-menu" role="listbox" aria-label="选择曲包" hidden></div>
+    <div id="settingsDialog" class="settings-backdrop" hidden>
+        <section class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+            <header><h2 id="settingsTitle" data-i18n="settings">SETTINGS</h2><button type="button" id="closeSettings" aria-label="关闭设置"><i class="fa-solid fa-xmark"></i></button></header>
+            <div class="settings-row"><span id="settingLanguageLabel" data-i18n="language">LANGUAGE</span><select id="settingLanguage" aria-labelledby="settingLanguageLabel"><option value="en" lang="en">English</option><option value="zh" lang="zh-Hans">简体中文</option><option value="zh-Hant" lang="zh-Hant">繁體中文</option><option value="fr" lang="fr">Français</option><option value="ja" lang="ja">日本語</option><option value="ko" lang="ko">한국어</option><option value="es" lang="es">Español</option><option value="iu" lang="iu">ᐃᓄᒃᑎᑐᑦ</option></select></div>
+            <div class="settings-row"><span id="settingThemeLabel" data-i18n="theme">APPEARANCE</span><select id="settingTheme" aria-labelledby="settingThemeLabel"><option value="light" data-i18n="light">LIGHT</option><option value="dark" data-i18n="dark">DARK</option></select></div>
+            <label><span data-i18n="mute">MUTE PREVIEWS</span><input type="checkbox" id="settingMute" role="switch"></label>
+            <label><span data-i18n="motion">REDUCE MOTION</span><input type="checkbox" id="settingMotion" role="switch"></label>
+            <button type="button" id="settingsDone" class="settings-done" data-i18n="done">DONE</button>
+        </section>
+    </div>
+    <div id="sessionExit" class="session-exit" role="dialog" aria-modal="true" aria-labelledby="exitTitle" hidden>
+        <h1>QUALITHM</h1><p id="exitTitle" data-i18n="ended">SESSION ENDED</p>
+        <button type="button" id="resumeSession" data-i18n="resume">RETURN TO TITLE</button>
     </div>
 
     <!-- SONG EDITOR MODAL -->
@@ -360,10 +394,18 @@
     </div>
 
     <script src="assets/vendor/chroma-3.2.0.min.js"></script>
-    <script src="palette.js?v=8.4.0-hyp.3"></script>
+    <script src="palette.js?v=8.16.4"></script>
     <script src="metadata-lookup.js?v=8.4.0"></script>
-    <script src="seed-fallback.js?v=8.4.0"></script>
-<script src="script.js?v=8.4.0-hyp.3" defer></script>
+    <script src="seed-fallback.js?v=8.16.4"></script>
+    <script src="catalog-updates.js?v=8.16.4"></script>
+    <script src="local-art.js?v=8.5.0"></script>
+<script src="script.js?v=8.16.4" defer></script>
+<script src="locales.js?v=8.16.4" defer></script>
+<script src="selection-i18n.js?v=8.16.4" defer></script>
+<script src="settings-select.js?v=8.16.4" defer></script>
+<script src="ui-settings.js?v=8.16.4" defer></script>
+<script src="text-motion.js?v=8.16.4" defer></script>
+<script src="mobile-library.js?v=8.16.4" defer></script>
 </body>
 </html>
 

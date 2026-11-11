@@ -481,6 +481,13 @@
         "NUL": 2,
         "PHM": 6,
         "DEC": 8.7
+      },
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
       }
     },
     {
@@ -556,6 +563,13 @@
         "NUL": 6,
         "PHM": 10.9,
         "DEC": 13.8
+      },
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
       }
     },
     {
@@ -693,6 +707,13 @@
         "NUL": 1,
         "PHM": 5,
         "DEC": 9.6
+      },
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
       }
     },
     {
@@ -708,6 +729,13 @@
         "NUL": 4,
         "PHM": 9.8,
         "DEC": 12.4
+      },
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
       }
     },
     {
@@ -752,6 +780,13 @@
         "NUL": 4,
         "PHM": 9.7,
         "DEC": 12.8
+      },
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
       }
     },
     {
@@ -768,6 +803,13 @@
         "NUL": 6,
         "PHM": 8.7,
         "DEC": 13.6
+      },
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
       }
     },
     {
@@ -804,7 +846,7 @@
       "title": "Aleph-0",
       "artist": "LeaF",
       "category": "VARIETY",
-      "subgroup": "OTHERS",
+      "subgroup": "BMS",
       "bpm": 250,
       "coverUrl": "https://storage.moegirl.org.cn/moegirl/commons/4/43/Aleph0.jpg",
       "difficulties": {
@@ -827,7 +869,9 @@
       "coverFallbackUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/0a/54/af/0a54affc-1975-b6df-79c7-904e29052957/0198448420044_cover.jpg/600x600bb.jpg",
       "metadataSources": [
         "https://music.apple.com/us/album/aleph-0-short-ver-2022-remaster/1748255661?i=1748256018&uo=4"
-      ]
+      ],
+      "alias": "",
+      "hidden": false
     },
     {
       "NUL": 3,
@@ -845,9 +889,16 @@
         "HYP": 16.5,
         "WMS": "墓"
       },
-      "coverUrl": "N:\\桌面归档\\Picture\\Chugekimai\\G[In]G.jpg",
+      "coverUrl": "assets/jackets/god-in-a-girl.jpg",
       "bpm": 49,
-      "subgroup": ""
+      "subgroup": "",
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      }
     },
     {
       "NUL": 3,
@@ -963,17 +1014,27 @@
         "MET": 14.4,
         "HYP": 15.2
       },
-      "coverUrl": "https://silentblue.remywiki.com/images/6/62/XL_TECHNO_-More_Dance_Remix-.png",
+      "coverUrl": "https://ts3.tc.mm.bing.net/th/id/OIP-C.-0j5lZbwab-fCp6yWZ81tAAAAA?r=0&rs=1&pid=ImgDetMain&o=7&rm=3",
       "bpm": 150,
       "subgroup": "PACA PACA PASSION",
-      "hyperTitle": "XL TECHNO -More Dance Remix- (Full Version)"
+      "hyperTitle": "XL TECHNO -More Dance Remix- (Full Version)",
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      },
+      "alias": "",
+      "hidden": false
     },
     {
       "NUL": 3,
       "PHM": 7,
       "DEC": 10.5,
       "id": "16150cf2-714c-42aa-a075-f02da9b1d426",
-      "title": "《髓星》 -Doppelkonzert für Violine und Violoncello Nr. 7, Markstern-",
+      "title": "《髄星》 -Doppelkonzert für Violine und Violoncello Nr. 7, Markstern-",
+      "alias": "髓星",
       "artist": "削除 vs. virkato",
       "category": "Original",
       "difficulties": {
@@ -984,9 +1045,16 @@
         "HYP": 16.4,
         "WMS": "奏"
       },
-      "coverUrl": "N:\\Edge Download\\已生成图像 (43).png",
+      "coverUrl": "assets/jackets/markstern.png",
       "bpm": 184,
-      "subgroup": ""
+      "subgroup": "",
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      }
     },
     {
       "NUL": 3,
@@ -1006,7 +1074,14 @@
       },
       "coverUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQwAy52CIg4AsnQBLZvjiC_oCdWclkMt7NEdQ&s",
       "bpm": 95,
-      "subgroup": "BEMANI"
+      "subgroup": "BEMANI",
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      }
     },
     {
       "NUL": 3,
@@ -1099,7 +1174,14 @@
         "https://wikiwiki.jp/phigros/Chronos%20Collapse%20-%20La%20Campanella"
       ],
       "coverSource": "Game wiki jacket",
-      "durationMs": 153000
+      "durationMs": 153000,
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      }
     },
     {
       "id": "collab-phi-crave-wave",
@@ -1121,7 +1203,14 @@
         "https://wikiwiki.jp/phigros/Crave%20Wave"
       ],
       "durationMs": 127000,
-      "coverSource": "Game wiki jacket"
+      "coverSource": "Game wiki jacket",
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      }
     },
     {
       "id": "collab-phi-destruction-321",
@@ -1143,7 +1232,14 @@
         "https://wikiwiki.jp/phigros/DESTRUCTION%203%2C2%2C1"
       ],
       "durationMs": 160000,
-      "coverSource": "Game wiki jacket"
+      "coverSource": "Game wiki jacket",
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      }
     },
     {
       "id": "collab-pr-artificial-existence",
@@ -1158,13 +1254,22 @@
         "NUL": 4,
         "PHM": 8,
         "DEC": 11.5,
-        "MET": 14
+        "MET": 14.4
       },
       "ratingStatus": "provisional",
       "metadataSources": [
         "https://wikiwiki.jp/paradigm_/Artificial%20Existence"
       ],
-      "coverSource": "Game wiki jacket"
+      "coverSource": "Game wiki jacket",
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      },
+      "alias": "",
+      "hidden": false
     },
     {
       "id": "collab-pr-re-boot",
@@ -1185,7 +1290,14 @@
       "metadataSources": [
         "https://wikiwiki.jp/paradigm_/RE%3B%20Boot"
       ],
-      "coverSource": "Game wiki jacket"
+      "coverSource": "Game wiki jacket",
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      }
     },
     {
       "id": "collab-pr-fractal-fission",
@@ -1207,7 +1319,14 @@
         "https://wikiwiki.jp/paradigm_/Fractal%20Fission"
       ],
       "coverSource": "Game wiki jacket",
-      "durationMs": 151000
+      "durationMs": 151000,
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      }
     },
     {
       "id": "collab-pr-sense-of-wonder",
@@ -1222,7 +1341,8 @@
         "NUL": 7,
         "PHM": 11,
         "DEC": 13.8,
-        "MET": 15.9
+        "MET": 15.7,
+        "HYP": 16
       },
       "ratingStatus": "provisional",
       "metadataSources": [
@@ -1234,7 +1354,6 @@
       "releaseDate": "2025-08-11T12:00:00Z",
       "releaseDurationMs": 186067,
       "coverFallbackUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/6c/6b/8e/6c6b8e16-67d3-3015-8e98-befc98b542a9/4550711517541_cover.png/600x600bb.jpg",
-      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/73/9e/83/739e8330-d291-0b34-8330-3125d71dfcc0/mzaf_13374082215873641997.plus.aac.p.m4a",
       "preview": {
         "url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/73/9e/83/739e8330-d291-0b34-8330-3125d71dfcc0/mzaf_13374082215873641997.plus.aac.p.m4a",
         "start": 0,
@@ -1242,7 +1361,9 @@
         "source": "iTunes",
         "sourceUrl": "https://music.apple.com/us/album/sense-of-wonder/1832247485?i=1832247489&uo=4"
       },
-      "durationMs": 187000
+      "durationMs": 187000,
+      "alias": "",
+      "hidden": false
     },
     {
       "id": "collab-pr-snow",
@@ -1257,14 +1378,22 @@
         "NUL": 2,
         "PHM": 6,
         "DEC": 9.2,
-        "MET": 12.3
+        "MET": 12.5
       },
       "ratingStatus": "provisional",
       "metadataSources": [
         "https://wikiwiki.jp/paradigm_/%E5%86%8D%E4%B9%9F%E4%B8%8D%E8%A7%81%EF%BC%8C%E9%82%A3%E5%A4%A9%E7%9A%84%E9%9B%AA"
       ],
       "hidden": true,
-      "coverSource": "Game wiki jacket"
+      "coverSource": "Game wiki jacket",
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      },
+      "alias": ""
     },
     {
       "id": "collab-pr-awaken-in-ruins",
@@ -1277,16 +1406,26 @@
       "coverUrl": "https://cdn.wikiwiki.jp/to/w/paradigm_/Awaken%20In%20Ruins/::attach/Awaken%20In%20Ruins.webp",
       "difficulties": {
         "NUL": 2,
-        "PHM": 5,
-        "DEC": 8.5,
-        "MET": 11.8
+        "PHM": 6,
+        "DEC": 9.7,
+        "MET": 10.5,
+        "HYP": 14.5
       },
       "ratingStatus": "provisional",
       "metadataSources": [
         "https://wikiwiki.jp/paradigm_/Awaken%20In%20Ruins"
       ],
       "coverSource": "Game wiki jacket",
-      "durationMs": 136000
+      "durationMs": 136000,
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      },
+      "alias": "",
+      "hidden": false
     },
     {
       "id": "collab-pr-echoes-of-the-forest",
@@ -1301,14 +1440,23 @@
         "NUL": 4,
         "PHM": 8.5,
         "DEC": 12,
-        "MET": 14.6
+        "MET": 14.9
       },
       "ratingStatus": "provisional",
       "metadataSources": [
         "https://wikiwiki.jp/paradigm_/Echoes%20of%20the%20Forest"
       ],
       "coverSource": "Game wiki jacket",
-      "durationMs": 157000
+      "durationMs": 157000,
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      },
+      "alias": "",
+      "hidden": false
     },
     {
       "id": "collab-pr-zero",
@@ -1324,14 +1472,23 @@
         "PHM": 10.5,
         "DEC": 13.4,
         "MET": 15.3,
-        "HYP": 16
+        "HYP": 15.8
       },
       "ratingStatus": "provisional",
       "metadataSources": [
         "https://wikiwiki.jp/paradigm_/%E9%9B%B6%E8%99%9F%E8%BB%8A%E8%BC%9B"
       ],
       "coverSource": "Game wiki jacket",
-      "durationMs": 141000
+      "durationMs": 141000,
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      },
+      "alias": "",
+      "hidden": false
     },
     {
       "id": "collab-pr-observatory",
@@ -1353,7 +1510,16 @@
         "https://wikiwiki.jp/paradigm_/Observatory"
       ],
       "coverSource": "Game wiki jacket",
-      "durationMs": 209000
+      "durationMs": 209000,
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      },
+      "alias": "",
+      "hidden": false
     },
     {
       "id": "collab-pr-paradigm-la-noche",
@@ -1365,10 +1531,10 @@
       "bpm": 120,
       "coverUrl": "https://cdn.wikiwiki.jp/to/w/paradigm_/Paradigm%20la%20noche/::attach/Paradigm%20la%20noche.webp",
       "difficulties": {
-        "NUL": 2,
-        "PHM": 6,
-        "DEC": 9.8,
-        "MET": 12.8
+        "NUL": 1,
+        "PHM": 7,
+        "DEC": 10.5,
+        "MET": 13
       },
       "ratingStatus": "provisional",
       "metadataSources": [
@@ -1376,7 +1542,15 @@
       ],
       "hidden": true,
       "coverSource": "Game wiki jacket",
-      "durationMs": 144000
+      "durationMs": 144000,
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      },
+      "alias": ""
     },
     {
       "id": "collab-rot-inverted-world",
@@ -1390,8 +1564,8 @@
       "difficulties": {
         "NUL": 4,
         "PHM": 8,
-        "DEC": 11.8,
-        "MET": 14.4
+        "DEC": 12,
+        "MET": 15
       },
       "ratingStatus": "provisional",
       "metadataSources": [
@@ -1403,7 +1577,6 @@
       "releaseDate": "2026-02-28T12:00:00Z",
       "releaseDurationMs": 135320,
       "coverFallbackUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/f6/7b/c2/f67bc288-87ec-9618-1bd8-3ce9e6dc6e57/823191091462_cover.jpg/600x600bb.jpg",
-      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/66/ac/b4/66acb46a-ff94-b66d-8fb1-6565064674ad/mzaf_5404341894146461856.plus.aac.p.m4a",
       "preview": {
         "url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview211/v4/66/ac/b4/66acb46a-ff94-b66d-8fb1-6565064674ad/mzaf_5404341894146461856.plus.aac.p.m4a",
         "start": 0,
@@ -1411,7 +1584,9 @@
         "source": "iTunes",
         "sourceUrl": "https://music.apple.com/us/album/inverted-world/1878128456?i=1878128457&uo=4"
       },
-      "durationMs": 132000
+      "durationMs": 132000,
+      "alias": "",
+      "hidden": false
     },
     {
       "id": "collab-rot-manifold-hypothesis",
@@ -1426,14 +1601,23 @@
         "NUL": 4,
         "PHM": 8.3,
         "DEC": 11.6,
-        "MET": 14.2
+        "MET": 14.4
       },
       "ratingStatus": "provisional",
       "metadataSources": [
         "https://wikiwiki.jp/rotaeno/Manifold%20Hypothesis"
       ],
       "durationMs": 150000,
-      "coverSource": "Game wiki jacket"
+      "coverSource": "Game wiki jacket",
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      },
+      "alias": "",
+      "hidden": false
     },
     {
       "id": "collab-rot-suimori",
@@ -1456,7 +1640,14 @@
         "https://wikiwiki.jp/rotaeno/%E7%BF%A0%E6%9D%9C"
       ],
       "coverSource": "Game wiki jacket",
-      "durationMs": 151000
+      "durationMs": 151000,
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      }
     },
     {
       "id": "collab-rot-quadruplicity",
@@ -1479,7 +1670,14 @@
         "https://wikiwiki.jp/rotaeno/Quadruplicity"
       ],
       "coverSource": "Game wiki jacket",
-      "durationMs": 139000
+      "durationMs": 139000,
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      }
     },
     {
       "id": "collab-cy2-jakarta",
@@ -1493,8 +1691,8 @@
       "difficulties": {
         "NUL": 3,
         "PHM": 7.5,
-        "DEC": 11.2,
-        "MET": 13.8
+        "DEC": 11.4,
+        "MET": 14.2
       },
       "ratingStatus": "provisional",
       "metadataSources": [
@@ -1502,7 +1700,16 @@
         "https://cytus.fandom.com/wiki/Jakarta_PROGRESSION"
       ],
       "durationMs": 123000,
-      "coverSource": "Game wiki jacket"
+      "coverSource": "Game wiki jacket",
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      },
+      "alias": "",
+      "hidden": false
     },
     {
       "id": "collab-cy2-qualia",
@@ -1517,7 +1724,9 @@
         "NUL": 3,
         "PHM": 7.8,
         "DEC": 11.5,
-        "MET": 14
+        "MET": 14,
+        "WMS": "墓",
+        "HYP": 15.6
       },
       "ratingStatus": "provisional",
       "metadataSources": [
@@ -1529,7 +1738,6 @@
       "releaseDate": "2020-12-25T12:00:00Z",
       "releaseDurationMs": 330039,
       "coverFallbackUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/b5/00/ad/b500ad72-6051-45ec-00fc-0a7155f64c5c/80368.jpg/600x600bb.jpg",
-      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/e2/9d/1f/e29d1f86-2c17-0c7f-898c-790d08f051ec/mzaf_7831594294363194585.plus.aac.p.m4a",
       "preview": {
         "url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/e2/9d/1f/e29d1f86-2c17-0c7f-898c-790d08f051ec/mzaf_7831594294363194585.plus.aac.p.m4a",
         "start": 0,
@@ -1537,7 +1745,9 @@
         "source": "iTunes",
         "sourceUrl": "https://music.apple.com/us/album/qualia/1549011897?i=1549012197&uo=4"
       },
-      "durationMs": 144000
+      "durationMs": 144000,
+      "alias": "",
+      "hidden": false
     },
     {
       "id": "collab-cy2-alexandrite",
@@ -1593,7 +1803,14 @@
         "https://wikiwiki.jp/cytus-2/iL"
       ],
       "coverSource": "Game wiki jacket",
-      "durationMs": 182000
+      "durationMs": 182000,
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      }
     },
     {
       "id": "collab-cy2-drg",
@@ -1607,15 +1824,24 @@
       "difficulties": {
         "NUL": 2,
         "PHM": 6,
-        "DEC": 9.5,
-        "MET": 12.5
+        "DEC": 10.5,
+        "MET": 14.8
       },
       "ratingStatus": "provisional",
       "metadataSources": [
         "https://wikiwiki.jp/cytus-2/D%20R%20G"
       ],
       "coverSource": "Game wiki jacket",
-      "durationMs": 121000
+      "durationMs": 121000,
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      },
+      "alias": "",
+      "hidden": false
     },
     {
       "id": "collab-cy2-chaos",
@@ -1630,7 +1856,8 @@
         "NUL": 5,
         "PHM": 9.5,
         "DEC": 13,
-        "MET": 15
+        "MET": 15,
+        "HYP": 15.9
       },
       "ratingStatus": "provisional",
       "metadataSources": [
@@ -1642,7 +1869,6 @@
       "releaseDate": "2022-02-13T12:00:00Z",
       "releaseDurationMs": 220829,
       "coverFallbackUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/2f/00/88/2f008815-60ca-ca19-28a3-9f1c0d627564/859752670036_cover.jpg/600x600bb.jpg",
-      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/82/5c/e4/825ce477-f54e-3745-01c4-396fc4522e06/mzaf_6780999298686792662.plus.aac.p.m4a",
       "preview": {
         "url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview126/v4/82/5c/e4/825ce477-f54e-3745-01c4-396fc4522e06/mzaf_6780999298686792662.plus.aac.p.m4a",
         "start": 0,
@@ -1650,7 +1876,9 @@
         "source": "iTunes",
         "sourceUrl": "https://music.apple.com/us/album/chaos/1608066866?i=1608067453&uo=4"
       },
-      "durationMs": 221000
+      "durationMs": 221000,
+      "alias": "",
+      "hidden": false
     },
     {
       "id": "collab-cy2-v",
@@ -1665,7 +1893,7 @@
         "NUL": 6,
         "PHM": 10,
         "DEC": 13.4,
-        "MET": 15.3
+        "MET": 15.4
       },
       "ratingStatus": "provisional",
       "metadataSources": [
@@ -1677,7 +1905,6 @@
       "releaseDate": "2022-02-13T12:00:00Z",
       "releaseDurationMs": 250029,
       "coverFallbackUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/7d/29/c9/7d29c92b-17fa-65f8-06d0-4747f8495a5e/859717719220_cover.jpg/600x600bb.jpg",
-      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/f0/22/53/f0225330-958a-945b-c58a-ca4f41feb219/mzaf_15170300412179512822.plus.aac.p.m4a",
       "preview": {
         "url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/f0/22/53/f0225330-958a-945b-c58a-ca4f41feb219/mzaf_15170300412179512822.plus.aac.p.m4a",
         "start": 0,
@@ -1685,7 +1912,9 @@
         "source": "iTunes",
         "sourceUrl": "https://music.apple.com/us/album/v/1840420904?i=1840421407&uo=4"
       },
-      "durationMs": 251000
+      "durationMs": 251000,
+      "alias": "",
+      "hidden": false
     },
     {
       "id": "collab-cy2-whole-rest",
@@ -1797,7 +2026,9 @@
       "preview": {
         "url": "",
         "start": 0,
-        "end": null
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
       }
     },
     {
@@ -1813,7 +2044,8 @@
         "NUL": 2,
         "PHM": 5,
         "DEC": 8.5,
-        "MET": 11.8
+        "MET": 11.8,
+        "WMS": "奏"
       },
       "ratingStatus": "provisional",
       "metadataSources": [
@@ -1826,7 +2058,6 @@
       "releaseDate": "2015-07-15T12:00:00Z",
       "releaseDurationMs": 233741,
       "coverFallbackUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music30/v4/d2/99/1f/d2991fbd-8b4c-37ea-73f9-291e65244661/859717464946_cover.jpg/600x600bb.jpg",
-      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/1f/41/14/1f4114fc-680b-861f-fa4a-33252fb3fbb4/mzaf_15038308775655623870.plus.aac.p.m4a",
       "preview": {
         "url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/1f/41/14/1f4114fc-680b-861f-fa4a-33252fb3fbb4/mzaf_15038308775655623870.plus.aac.p.m4a",
         "start": 0,
@@ -1834,7 +2065,8 @@
         "source": "iTunes",
         "sourceUrl": "https://music.apple.com/us/album/yubikiri-genman/1119850105?i=1119853289&uo=4"
       },
-      "durationMs": 184000
+      "durationMs": 184000,
+      "alias": ""
     },
     {
       "id": "collab-cy2-space-colony",
@@ -1989,8 +2221,8 @@
       "difficulties": {
         "NUL": 2,
         "PHM": 5,
-        "DEC": 8.7,
-        "MET": 11.8
+        "DEC": 9.7,
+        "MET": 13.8
       },
       "ratingStatus": "provisional",
       "metadataSources": [
@@ -2002,7 +2234,6 @@
       "releaseDate": "2022-02-13T12:00:00Z",
       "releaseDurationMs": 188665,
       "coverFallbackUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/91/c6/18/91c61869-d703-eea3-c94a-4b46657707f7/859715449259_cover.jpg/600x600bb.jpg",
-      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/20/ee/b9/20eeb9ba-eca1-7bc5-5398-29693b1a62a3/mzaf_16240250817779939686.plus.aac.p.m4a",
       "preview": {
         "url": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/20/ee/b9/20eeb9ba-eca1-7bc5-5398-29693b1a62a3/mzaf_16240250817779939686.plus.aac.p.m4a",
         "start": 0,
@@ -2010,7 +2241,218 @@
         "source": "iTunes",
         "sourceUrl": "https://music.apple.com/us/album/used-to-be/1839032697?i=1839033052&uo=4"
       },
-      "durationMs": 190000
+      "durationMs": 190000,
+      "alias": "",
+      "hidden": false
+    },
+    {
+      "NUL": 3,
+      "PHM": 7,
+      "DEC": 10.5,
+      "id": "5f797d1e-4708-4850-92ae-533f3b6396ab",
+      "title": "far in the blue sky...",
+      "artist": "Saikoro",
+      "category": "VARIETY",
+      "difficulties": {
+        "NUL": 5,
+        "PHM": 9,
+        "DEC": 14.4,
+        "MET": 15.9,
+        "WMS": "1.2x",
+        "HYP": 15.9,
+        "HYP_artist": "4mberST0NE&porrige",
+        "HYP_cover": "https://i1.sndcdn.com/artworks-vR0DzavPLmV5lzyt-cNjhiQ-t500x500.jpg"
+      },
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null,
+        "source": "",
+        "sourceUrl": ""
+      },
+      "coverUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRVwdXaCgp2O2l_BTc8aJFK9f-bnLuQeDq_xcvi6pKHbYXPCqjRNS1fnnk&s=10",
+      "bpm": 133,
+      "subgroup": "BMS",
+      "alias": "",
+      "hidden": false,
+      "hyperTitle": "far in the blue sky...(Hypertrance Bootleg)"
+    },
+    {
+      "NUL": 3,
+      "PHM": 7,
+      "DEC": 10.5,
+      "id": "1407117a-e38e-40a7-aa95-f63989f2f61b",
+      "title": "大音",
+      "artist": "大音",
+      "category": "Original",
+      "difficulties": {
+        "NUL": 12,
+        "PHM": 13.5,
+        "DEC": 15,
+        "MET": 16.5,
+        "HYP": 18,
+        "WMS": "墓",
+        "WMS_artist": "名乗る名が無い vs 大国奏音"
+      },
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null
+      },
+      "coverUrl": "assets/jackets/da-yin.jpg",
+      "bpm": 118,
+      "subgroup": "",
+      "alias": "",
+      "hidden": false
+    },
+    {
+      "NUL": 3,
+      "PHM": 7,
+      "DEC": 10.5,
+      "id": "63348751-d95a-49ab-b6bb-805c544f0aa6",
+      "title": "ᐃᓄᒃ",
+      "artist": "Silentroom vs TJ.hangneil",
+      "category": "Original",
+      "difficulties": {
+        "NUL": 9.5,
+        "PHM": 13.7,
+        "DEC": 15.1,
+        "MET": 16.3,
+        "HYP": 17
+      },
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null
+      },
+      "coverUrl": "",
+      "bpm": 289,
+      "subgroup": "",
+      "alias": "",
+      "hidden": false
+    },
+    {
+      "NUL": 3,
+      "PHM": 7,
+      "DEC": 10.5,
+      "id": "2ba49aa0-ea01-4ecd-a897-5e4ddf20d753",
+      "title": "Astral Requiem No.0 \"帰る\"",
+      "artist": "world's end girlfriend",
+      "category": "Original",
+      "difficulties": {
+        "NUL": 10.4,
+        "PHM": 13.6,
+        "DEC": 14.9,
+        "MET": 16.4,
+        "HYP": 17.7
+      },
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null
+      },
+      "coverUrl": "",
+      "bpm": 128,
+      "subgroup": "",
+      "alias": "",
+      "hidden": false
+    },
+    {
+      "NUL": 3,
+      "PHM": 7,
+      "DEC": 10.5,
+      "id": "d9deb939-d99d-4e87-aa8c-0bdf8fb45446",
+      "title": "雪融花",
+      "artist": "あず♪ × 無力P feat. 相沢",
+      "category": "Original",
+      "difficulties": {
+        "NUL": 8,
+        "PHM": 12,
+        "DEC": 14.5,
+        "MET": 15.9,
+        "HYP": 17.2
+      },
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null
+      },
+      "coverUrl": "",
+      "bpm": 195,
+      "subgroup": "",
+      "alias": "",
+      "hidden": false
+    },
+    {
+      "NUL": 3,
+      "PHM": 7,
+      "DEC": 10.5,
+      "id": "4e52d215-77d3-4b10-8c7a-5282e1a73cca",
+      "title": "Comptinésie",
+      "artist": "MisoilePunch♪ × きくお",
+      "category": "Original",
+      "difficulties": {
+        "NUL": 10,
+        "PHM": 10.4,
+        "DEC": 14.9,
+        "MET": 15.8,
+        "HYP": 16.8
+      },
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null
+      },
+      "coverUrl": "",
+      "bpm": 130,
+      "subgroup": "",
+      "alias": "",
+      "hidden": false
+    },
+    {
+      "id": "original-selenophilia",
+      "title": "Selenophilia",
+      "artist": "200 OK",
+      "category": "Original",
+      "subgroup": "",
+    "bpm": 200,
+      "coverUrl": "assets/jackets/selenophilia.png",
+      "difficulties": {
+        "NUL": 3,
+        "PHM": 8,
+        "DEC": 13.9,
+        "MET": 16.3
+      },
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null
+      },
+      "alias": "",
+      "hidden": false
+    },
+    {
+      "id": "original-2enith-4fter-chroma",
+    "title": "2enith 4bove Chroma",
+      "artist": "xi feat. 燕檸 (vocal: 柚木つばめ)",
+      "category": "Original",
+      "subgroup": "",
+    "bpm": 242.4,
+      "coverUrl": "assets/jackets/2enith-4fter-chroma.png",
+      "difficulties": {
+        "NUL": 4,
+        "PHM": 8,
+        "DEC": 12.4,
+        "MET": 15.5,
+        "HYP": 16.2
+      },
+      "preview": {
+        "url": "",
+        "start": 0,
+        "end": null
+      },
+      "alias": "",
+      "hidden": false
     }
   ],
   "meta": {
@@ -2091,7 +2533,7 @@
       },
       "WHIMSY": {
         "sub": "",
-        "cover": "https://discovery.sndimg.com/content/dam/images/discovery/fullset/2022/10/Blackhole%20GettyImages-956705946.jpg.rend.hgtvcom.1280.1280.suffix/1665028642072.jpeg",
+        "cover": "assets/packs/whimsy.png",
         "fit": "cover"
       },
       "VARIETY": {

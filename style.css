@@ -60,6 +60,10 @@
 @font-face { font-family: 'Rajdhani'; src: url('./assets/fonts/rajdhani-500.woff2') format('woff2'); font-style: normal; font-weight: 500; font-display: swap; }
 @font-face { font-family: 'Rajdhani'; src: url('./assets/fonts/rajdhani-600.woff2') format('woff2'); font-style: normal; font-weight: 600; font-display: swap; }
 @font-face { font-family: 'Rajdhani'; src: url('./assets/fonts/rajdhani-700.woff2') format('woff2'); font-style: normal; font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Qualithm Greek'; src: url('./assets/fonts/noto-sans-greek.woff2') format('woff2'); font-style: normal; font-weight: 400 700; font-display: swap; unicode-range: U+0300-03FF, U+1F00-1FFF; }
+.greek-text { font-family: 'Qualithm Greek', 'Noto Sans', sans-serif; letter-spacing: normal; }
+.s-title:has(.greek-text) { line-height: 1.5; }
+#detailTitle:has(.greek-text) { line-height: 1.35; }
 
 :root {
     color-scheme: light;
@@ -257,6 +261,7 @@ body[data-theme="dark"] .cnt { color: #aaa; }
 /* Collapsible Groups */
 .list-group { margin-bottom: 10px; }
 .group-header { 
+    appearance: none; border: 0; background: transparent; width: 100%;
     font-size: 1.5rem; font-weight: 700; color: var(--tx-main); 
     border-bottom: 1px solid var(--bd-line); 
     padding: 10px 0; margin-top: 10px; cursor: pointer; 
@@ -264,7 +269,7 @@ body[data-theme="dark"] .cnt { color: #aaa; }
     user-select: none; transition: color 0.2s;
     font-family: 'Rajdhani', sans-serif;
 }
-.group-header:hover { color: var(--c-accent); }
+.group-header:hover { color: var(--tx-main); }
 .group-header::after { content: '\f078'; font-family: 'Font Awesome 6 Free'; font-size: 0.8rem; transition: 0.3s; }
 .list-group.collapsed .group-content { display: none; }
 .list-group.collapsed .group-header::after { transform: rotate(-90deg); }

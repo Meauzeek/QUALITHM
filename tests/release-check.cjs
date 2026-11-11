@@ -2,15 +2,16 @@ const assert = require('node:assert/strict');
 const { sandbox, State, DB, Utils, ChartPolicy, Preview, data } = require('./logic-smoke.cjs');
 const { rank } = require('../metadata-lookup.js');
 require('./palette-check.cjs');
+require('./catalog-check.cjs');
 
 async function main() {
   const added = data.songs.filter(s => s.id.startsWith('collab-'));
   assert.equal(added.length, 34);
-  assert.equal(new Set(data.songs.map(s => s.id)).size, 73);
+  assert.equal(new Set(data.songs.map(s => s.id)).size, 81);
   const expected = { Phigros: 4, 'Paradigm: Reboot': 10, Rotaeno: 4, 'Cytus II': 16 };
   for (const [category, count] of Object.entries(expected)) assert.equal(added.filter(s => s.category === category).length, count);
   assert.equal(added.filter(s => s.hidden).length, 3);
-  const locked = { 'collab-phi-destruction-321': [16, null], 'collab-pr-zero': [15.3, 16], 'collab-pr-observatory': [15.9, null], 'collab-rot-suimori': [14.5, 15.8], 'collab-rot-quadruplicity': [15.4, 16], 'collab-cy2-ii': [15.5, null], 'collab-pr-sense-of-wonder': [15.9, null] };
+  const locked = { 'collab-phi-destruction-321': [16, null], 'collab-pr-zero': [15.3, 15.8], 'collab-pr-observatory': [15.9, null], 'collab-rot-suimori': [14.5, 15.8], 'collab-rot-quadruplicity': [15.4, 16], 'collab-cy2-ii': [15.5, null], 'collab-pr-sense-of-wonder': [15.7, 16] };
   for (const [id, [met, hyp]] of Object.entries(locked)) {
     const s = added.find(s => s.id === id);
     assert.equal(s.difficulties.MET, met);
@@ -38,13 +39,13 @@ async function main() {
   const frozen = JSON.stringify(local);
   const merged = DB.mergeSeed(local, data);
   assert.equal(JSON.stringify(local), frozen);
-  assert.equal(merged.songs.length, 74);
+  assert.equal(merged.songs.length, 82);
   assert.deepEqual(merged.songs[0], edited);
   assert.deepEqual(merged.songs[1], custom);
   assert.equal(merged.meta.catMeta['maimai DX'].cover, 'custom.jpg');
   assert.equal(merged.meta.characters[0].id, 'user-character');
   assert(merged.meta.catOrder.indexOf('Phigros') < merged.meta.catOrder.indexOf('VARIETY'));
-  assert.equal(DB.mergeSeed(merged, data).songs.length, 74);
+  assert.equal(DB.mergeSeed(merged, data).songs.length, 82);
   const original = data.songs[0];
   assert.equal(DB.previewSupplements([{ ...original, preview: { url: '', start: 0, end: null } }]).length, 1);
   assert.equal(DB.previewSupplements([{ ...original, preview: { url: 'my-audio.ogg' } }]).length, 0);
@@ -59,6 +60,10 @@ async function main() {
   State.songs.push({ id: 'own-audio', preview: { url: 'assets/own.ogg', start: 12, end: 28 } });
   State.currSongId = 'own-audio';
   assert.equal(Preview.externalOnly, false);
+  State.currentSong.WMS_previewUrl = 'assets/own-full.ogg';
+  State.currDiff = 'WMS';
+  assert.equal(Preview.externalOnly, false, 'A custom WMS audio URL is not an Apple store sample');
+  State.currDiff = 'MET';
   Preview.audio.duration = 20;
   assert.equal(Preview.endTime(), 20, 'Configured end must clamp to actual duration');
   await Preview.play();
@@ -74,17 +79,17 @@ async function main() {
     sandbox.localStorage = { getItem: k => storage.get(k), setItem: (k, v) => storage.set(k, v) };
     sandbox.fetch = async () => ({ ok: true, json: async () => data });
     await DB.init();
-    assert.equal(State.songs.length, 74);
+    assert.equal(State.songs.length, 82);
     assert.equal(State.songs[0].title, 'LOCAL EDIT');
     assert(storage.has(DB.key));
   }
   sandbox.localStorage = { getItem: () => null, setItem: () => {} };
-  await DB.init(); assert.equal(State.songs.length, 73);
+  await DB.init(); assert.equal(State.songs.length, 81);
   sandbox.fetch = async () => { throw new Error('simulated offline'); };
-  await DB.init(); assert.equal(State.songs.length, 73);
+  await DB.init(); assert.equal(State.songs.length, 81);
   let overwrites = 0;
   sandbox.localStorage = { getItem: () => '{broken', setItem: () => overwrites++ };
-  await DB.init(); assert.equal(overwrites, 0); assert.equal(State.songs.length, 73);
+  await DB.init(); assert.equal(overwrites, 0); assert.equal(State.songs.length, 81);
 
   // No business cap and no collision between numeric level 999 and WHIMSY.
   for (const value of [17, 17.5, 18, 25.9, 999, 1000, 1000000]) {

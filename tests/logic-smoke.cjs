@@ -4,7 +4,7 @@ const path = require('path');
 
 const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'script.js'), 'utf8');
-const libraryOnly = source.split("document.getElementById('themeToggle')")[0];
+const libraryOnly = source.split("document.getElementById('themeToggle').onclick")[0];
 
 class AudioStub {
   constructor() { this.volume = 1; this.paused = true; this.readyState = 0; this.duration = NaN; this.currentTime = 0; this.src = ''; }
@@ -18,6 +18,7 @@ class AudioStub {
 function elementStub(initialClasses = []) {
   const classes = new Set(initialClasses);
   return {
+    setAttribute() {},
     classList: {
       contains: name => classes.has(name),
       toggle: (name, force) => {
@@ -58,6 +59,7 @@ vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(path.join(root, 'assets/vendor/chroma-3.2.0.min.js'), 'utf8'), sandbox);
 vm.runInContext(fs.readFileSync(path.join(root, 'palette.js'), 'utf8'), sandbox);
 vm.runInContext(fs.readFileSync(path.join(root, 'seed-fallback.js'), 'utf8'), sandbox);
+vm.runInContext(fs.readFileSync(path.join(root, 'catalog-updates.js'), 'utf8'), sandbox);
 vm.runInContext(`${libraryOnly}\nglobalThis.__logic = { State, DB, Utils, ChartPolicy, CHART_KEYS, DevUI, ChartSelection, Render, Preview };`, sandbox);
 
 const { State, DB, Utils, ChartPolicy, CHART_KEYS, DevUI, ChartSelection, Render, Preview } = sandbox.__logic;
@@ -93,19 +95,19 @@ assert(devElements.every(element => element.classList.contains('hidden')), 'DEBU
 
 State.currCat = 'Level';
 const levelEntries = State.songs.flatMap(song => ChartPolicy.levelEntries(song));
-assert(levelEntries.length === 333, `Expected 333 Level charts, got ${levelEntries.length}`);
-assert(new Set(levelEntries.map(entry => `${entry.song.id}::${entry.diff}`)).size === 333, 'Level row identities must be unique');
+assert(levelEntries.length === 380, `Expected 380 Level charts, got ${levelEntries.length}`);
+assert(new Set(levelEntries.map(entry => `${entry.song.id}::${entry.diff}`)).size === 380, 'Level row identities must be unique');
 
 State.currCat = 'All Songs';
 State.filterDiff = 'MET';
 const metEntries = State.songs.map(song => ChartPolicy.ordinaryEntry(song)).filter(Boolean);
-assert(metEntries.length === 73 && metEntries.every(entry => entry.diff === 'MET'), 'MET must be strict MET-only');
+assert(metEntries.length === 81 && metEntries.every(entry => entry.diff === 'MET'), 'MET must be strict MET-only');
 
 State.filterDiff = 'HYP';
 const hypEntries = State.songs.map(song => ChartPolicy.ordinaryEntry(song)).filter(Boolean);
-assert(hypEntries.length === 73, `Expected 73 HYP-mode rows, got ${hypEntries.length}`);
-assert(hypEntries.filter(entry => entry.diff === 'HYP').length === 27, 'Expected 27 actual HYP charts');
-assert(hypEntries.filter(entry => entry.diff === 'MET' && entry.fallback).length === 46, 'Expected 46 HYP→MET fallbacks');
+assert(hypEntries.length === 81, `Expected 81 HYP-mode rows, got ${hypEntries.length}`);
+assert(hypEntries.filter(entry => entry.diff === 'HYP').length === 38, 'Expected 38 actual HYP charts');
+assert(hypEntries.filter(entry => entry.diff === 'MET' && entry.fallback).length === 43, 'Expected 43 HYP→MET fallbacks');
 assert(hypEntries.filter(entry => entry.fallback).every(entry => entry.diff === 'MET' && entry.song.difficulties.HYP === undefined), 'Every HYP fallback row must identify itself as actual MET');
 
 const clickedFallback = hypEntries.find(entry => entry.fallback);
@@ -118,7 +120,7 @@ assert(State.currSongId === clickedFallback.song.id && State.currDiff === 'MET',
 
 State.filterDiff = 'WMS';
 const wmsEntries = State.songs.map(song => ChartPolicy.ordinaryEntry(song)).filter(Boolean);
-assert(wmsEntries.length === 14 && wmsEntries.every(entry => entry.diff === 'WMS'), 'WMS must be strict WMS-only');
+assert(wmsEntries.length === 18 && wmsEntries.every(entry => entry.diff === 'WMS'), 'WMS must be strict WMS-only');
 
 for (const entry of [...levelEntries, ...metEntries, ...hypEntries, ...wmsEntries]) {
   assert(CHART_KEYS.includes(entry.diff), `Unexpected chart key ${entry.diff}`);
@@ -126,5 +128,5 @@ for (const entry of [...levelEntries, ...metEntries, ...hypEntries, ...wmsEntrie
 }
 
 console.log('logic-smoke: PASS');
-console.log('LEVEL=333 MET=73 HYP=73 (27 HYP + 46 MET fallback) WMS=14 FAVORITES=1');
+console.log('LEVEL=380 MET=81 HYP=81 (38 HYP + 43 MET fallback) WMS=18 FAVORITES=1');
 module.exports = { sandbox, State, DB, Utils, ChartPolicy, Preview, data };

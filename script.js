@@ -3,7 +3,7 @@
    ========================================= */
 const CONFIG = {
     colors: {
-        NUL: '#ff7f50', PHM: '#d4af37', DEC: '#2e8b57',
+        NUL: '#ff7f50', PHM: '#e8b72f', DEC: '#2e8b57',
         get MET() { return globalThis.QualithmPalette?.metForTheme(document.body?.getAttribute('data-theme')) || (document.body?.getAttribute('data-theme') === 'dark' ? '#516ef2' : '#465fe2'); },
         HYP: '#9270d6', WMS: '#888888'
     },
@@ -21,17 +21,38 @@ const CONFIG = {
     ]
 };
 
-// Optional hard-coded pack art overrides. Empty by default so the configured
-// pack image or the first available song jacket becomes the fallback.
-const DEFAULT_CAT_COVERS = {};
+// Bundled default pack art; explicit custom pack images remain supported.
+const DEFAULT_CAT_COVERS = { WHIMSY: 'assets/packs/whimsy.png' };
 const CHART_KEYS = ['NUL', 'PHM', 'DEC', 'MET', 'HYP', 'WMS'];
 
 const Utils = {
     escapeHTML: value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])),
+    titleHTML(value) {
+        // Keep Greek bases and all attached marks in the same shaping font/run.
+        // Do not normalize or restyle Latin text, Roman numerals or other symbols.
+        const text = String(value ?? '');
+        const mixedCJK = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u.test(text);
+        const formatPart = part => mixedCJK ? part.split(/([()])/g).map(piece => /^[()]$/.test(piece) ? `<span class="cjk-punctuation">${piece}</span>` : Utils.escapeHTML(piece)).join('') : Utils.escapeHTML(part);
+        return text.split(/(\p{Script=Greek}[\p{Script=Greek}\p{M}]*)/gu).map(part =>
+            /^\p{Script=Greek}/u.test(part) ? `<span class="greek-text" lang="el">${Utils.escapeHTML(part)}</span>` : formatPart(part)
+        ).join('');
+    },
     randomTilt: () => (Math.random() * 4 - 2).toFixed(2) + 'deg',
     isBrowserAsset(url) {
-        const value = String(url || '').trim();
-        return Boolean(value) && !/^[a-z]:[\\/]/i.test(value) && !/^(?:javascript|vbscript|file):/i.test(value);
+        return Boolean(Utils.assetURL(url));
+    },
+    assetURL(url) {
+        let value = String(url || '').trim().replace(/^['"]|['"]$/g, '').replaceAll('\\', '/');
+        if (/^(?:file:|[a-z]:\/)/i.test(value)) {
+            const asset = value.match(/\/(assets\/[^?#]+)$/i);
+            if (!asset) return '';
+            value = asset[1];
+        }
+        if (/^(?:https?:\/\/|data:image\/(?:png|jpeg|webp|gif);base64,)/i.test(value)) return value;
+        let decoded;
+        try { decoded = decodeURIComponent(value).replaceAll('\\', '/'); } catch { return ''; }
+        if (!value || /^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(decoded) || decoded.split('/').includes('..')) return '';
+        return value.replace(/^\.\//, '');
     },
     formatRough(val) {
         if (typeof val === 'string') return Utils.escapeHTML(val);
@@ -45,9 +66,14 @@ const Utils = {
     },
     toggleTheme() {
         const body = document.body;
-        body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        const theme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        body.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme', theme);
+        try { localStorage.setItem('QUALITHM_THEME', theme); } catch {}
+        document.getElementById('themeToggle').setAttribute('aria-label', theme === 'dark' ? '切换日间模式' : '切换夜间模式');
         globalThis.QualithmPalette?.applyTheme(body.getAttribute('data-theme'));
         if (State.currentSong) { Render.songList(); Render.songDetail(); }
+        globalThis.SelectionText?.refresh();
     },
     exportData() {
         const blob = new Blob([JSON.stringify({songs: State.songs, meta: State.meta}, null, 2)], { type: 'application/json' });
@@ -117,11 +143,30 @@ const DB = {
     },
     mergeSeed(local, seed) {
         const songs = [...(local?.songs || [])];
+        const applied = new Set(local?.meta?.catalogUpdatesApplied || []);
+        for (const update of globalThis.QUALITHM_CATALOG_UPDATES || []) {
+            if (applied.has(update.id)) continue;
+            for (const change of update.songs) {
+                const index = songs.findIndex(song => song.id === change.id);
+                if (index < 0) continue;
+                const song = { ...songs[index], difficulties: { ...songs[index].difficulties } };
+                for (const [target, fields] of [[song, change.fields], [song.difficulties, change.difficulties]]) {
+                    for (const [key, patch] of Object.entries(fields || {})) {
+                        if (!Object.is(target[key], patch.before)) continue;
+                        if (Object.hasOwn(patch, 'after')) target[key] = patch.after;
+                        else delete target[key];
+                    }
+                }
+                songs[index] = song;
+            }
+            applied.add(update.id);
+        }
         const ids = new Set(songs.map(song => song.id));
         for (const song of seed.songs) {
             if (!ids.has(song.id)) { songs.push(song); ids.add(song.id); }
         }
         const meta = { ...seed.meta, ...(local?.meta || {}) };
+        meta.catalogUpdatesApplied = [...applied];
         meta.catMeta = { ...(seed.meta?.catMeta || {}), ...(local?.meta?.catMeta || {}) };
         const order = [...(local?.meta?.catOrder || seed.meta?.catOrder || [])];
         const seedOrder = seed.meta?.catOrder || [];
@@ -157,6 +202,10 @@ const DB = {
             }
         };
 
+        const whimsy = mergedMeta.catMeta.WHIMSY;
+        if (!whimsy?.cover || whimsy.cover === 'https://discovery.sndimg.com/content/dam/images/discovery/fullset/2022/10/Blackhole%20GettyImages-956705946.jpg.rend.hgtvcom.1280.1280.suffix/1665028642072.jpeg') {
+            mergedMeta.catMeta.WHIMSY = { ...whimsy, cover:DEFAULT_CAT_COVERS.WHIMSY };
+        }
         if (!mergedMeta.juniUrl || mergedMeta.juniUrl.includes('placehold.co')) {
             mergedMeta.juniUrl = SEED_META.juniUrl;
         }
@@ -227,6 +276,10 @@ const DB = {
             if (this.storageWritable !== false) localStorage.setItem(this.key, JSON.stringify({ songs: State.songs, meta: State.meta }));
         } catch (error) {
             console.warn('Local storage unavailable; export JSON to keep session edits.', error);
+            if (!this.storageWarningShown) {
+                this.storageWarningShown = true;
+                alert('浏览器存储空间不足或不可用，本次修改仅保留在当前页面。请立即导出 JSON 备份；大量曲绘建议放入 assets 文件夹。');
+            }
         }
         this.refreshCategories();
     },
@@ -305,11 +358,13 @@ const DevUI = {
     sync() {
         document.querySelectorAll('.dev-only').forEach(element => element.classList.toggle('hidden', !State.devMode));
         document.getElementById('devToggle')?.classList.toggle('active', State.devMode);
+        document.getElementById('devToggle')?.setAttribute('aria-pressed', String(State.devMode));
     }
 };
 
 const SceneManager = {
     switch(id) {
+        globalThis.MobileLibrary?.close(false);
         if (id !== 'music') Preview.stop();
         document.querySelectorAll('.scene').forEach(el => el.classList.remove('active'));
         document.getElementById(`scene-${id}`).classList.add('active');
@@ -330,6 +385,7 @@ const SceneManager = {
             QuickPack.render();
             DifficultyFilter.render();
             Render.songList();
+            Preview.select(State.currentSong, true);
         }
         DevUI.sync();
     }
@@ -361,9 +417,13 @@ const Juni = {
         img.classList.remove('image-error');
         img.onerror = () => img.classList.add('image-error');
         img.onload = () => img.classList.remove('image-error');
-        img.src = character.imageUrl || '';
+        // Preserve character rendering separately from portable song-cover imports.
+        const isBundledJuni = /^https?:\/\/scpsandboxcn\.wikidot\.com\/local--files\/zampona\/Juni_Kanban\.png(?:[?#].*)?$/i.test(character.imageUrl || '');
+        // The identical bundled PNG must not wait for an unreliable remote origin to fail.
+        const source = isBundledJuni ? 'assets/characters/juni.png' : /^(?:https?:|data:image\/|blob:)/i.test(character.imageUrl || '') ? character.imageUrl : Utils.assetURL(character.imageUrl);
+        if (img.dataset.characterSource !== source) { img.dataset.characterSource = source; img.src = source; }
         img.style.transform = `translate(calc(-50% + ${character.x}px), calc(-50% + ${character.y}px)) scale(${character.scale})`;
-        document.getElementById('activeCharacterName').innerText = `${String(character.name).toUpperCase()} // ${String(this.index + 1).padStart(2, '0')}`;
+        document.getElementById('activeCharacterName').innerText = character.name;
         if(State.devMode) {
             document.getElementById('juniX').value = character.x;
             document.getElementById('juniY').value = character.y;
@@ -456,16 +516,72 @@ const DifficultyFilter = {
 
 const QuickPack = {
     render() {
-        const select = document.getElementById('quickPackSelect');
-        if (!select) return;
-        select.innerHTML = '';
+        const name = document.getElementById('quickPackName');
+        const menu = document.getElementById('quickPackMenu');
+        if (!name || !menu) return;
+        name.textContent = State.currCat;
+        menu.replaceChildren();
         State.categories.forEach(category => {
-            const option = document.createElement('option');
-            option.value = category;
-            option.innerText = category;
-            option.selected = category === State.currCat;
-            select.appendChild(option);
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.setAttribute('role', 'option');
+            option.setAttribute('aria-selected', String(category === State.currCat));
+            option.dataset.category = category;
+            option.textContent = category;
+            option.onclick = () => { this.select(category); this.close(true); };
+            menu.appendChild(option);
         });
+        globalThis.SelectionText?.refresh();
+    },
+    close(restoreFocus = false) {
+        const menu = document.getElementById('quickPackMenu');
+        if (!menu) return;
+        menu.hidden = true;
+        document.getElementById('quickPackSelect').setAttribute('aria-expanded', 'false');
+        if (restoreFocus) document.getElementById('quickPackSelect').focus();
+    },
+    open() {
+        this.render();
+        const trigger = document.getElementById('quickPackSelect');
+        const menu = document.getElementById('quickPackMenu');
+        this.position();
+        menu.hidden = false;
+        trigger.setAttribute('aria-expanded', 'true');
+        (menu.querySelector('[aria-selected="true"]') || menu.firstElementChild)?.focus({preventScroll:true});
+    },
+    position() {
+        const trigger = document.getElementById('quickPackSelect');
+        const menu = document.getElementById('quickPackMenu');
+        const box = trigger.getBoundingClientRect();
+        const width = Math.min(300, innerWidth - 24);
+        menu.style.width = `${width}px`;
+        menu.style.left = `${Math.max(12, Math.min(box.left, innerWidth - width - 12))}px`;
+        menu.style.top = `${box.bottom + 8}px`;
+        menu.style.maxHeight = `${Math.max(80, Math.min(380, innerHeight - box.bottom - 24))}px`;
+    },
+    init() {
+        const trigger = document.getElementById('quickPackSelect');
+        const menu = document.getElementById('quickPackMenu');
+        trigger.onclick = () => menu.hidden ? this.open() : this.close();
+        trigger.addEventListener('keydown', event => {
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); this.open(); }
+        });
+        menu.addEventListener('keydown', event => {
+            if (event.key === 'Escape') { event.preventDefault(); this.close(true); return; }
+            if (event.key === 'Tab') { this.close(true); return; }
+            const options = [...menu.children];
+            const index = options.indexOf(document.activeElement);
+            const next = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1 : event.key === 'ArrowDown' ? (index + 1) % options.length : event.key === 'ArrowUp' ? (index - 1 + options.length) % options.length : null;
+            if (next !== null) { event.preventDefault(); options[next]?.focus(); }
+        });
+        document.addEventListener('pointerdown', event => { if (!menu.contains(event.target) && !trigger.contains(event.target)) this.close(); });
+        window.addEventListener('resize', () => this.close());
+        window.addEventListener('scroll', () => {
+            if (menu.hidden) return;
+            const box = trigger.getBoundingClientRect();
+            if (box.bottom < 0 || box.top > innerHeight) this.close();
+            else this.position();
+        }, {passive:true});
     },
     select(category) {
         if (!State.categories.includes(category)) return;
@@ -473,6 +589,7 @@ const QuickPack = {
         State.sortMode = State.isLevelCat ? 'level_desc' : (category === 'All Songs' ? 'pack' : 'subgroup');
         Preview.stop();
         this.render(); DifficultyFilter.render(); Render.songList();
+        Preview.select(State.currentSong, true);
     },
     step(direction) {
         const index = Math.max(0, State.categories.indexOf(State.currCat));
@@ -488,12 +605,56 @@ const PackScroller = {
         const container = document.querySelector('#scene-category .scroll-container');
         document.getElementById('packScrollPrev').onclick = () => this.step(-1);
         document.getElementById('packScrollNext').onclick = () => this.step(1);
-        container.addEventListener('scroll', () => this.refresh(), { passive: true });
+        container.tabIndex = 0;
+        container.addEventListener('scroll', () => {
+            this.refresh();
+            clearTimeout(this.settleTimer);
+            this.settleTimer = setTimeout(() => { this.targetIndex = null; }, 180);
+        }, { passive: true });
         container.addEventListener('wheel', event => {
+            this.targetIndex = null;
             if (container.scrollWidth <= container.clientWidth || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
             event.preventDefault();
             container.scrollBy({ left: event.deltaY, behavior: 'smooth' });
         }, { passive: false });
+        let drag = null, suppressClickUntil = 0;
+        container.addEventListener('dragstart', event => event.preventDefault());
+        container.addEventListener('pointerdown', event => {
+            if (event.pointerType !== 'mouse' || event.button !== 0 || event.target.closest('.cat-tools')) return;
+            drag = { id:event.pointerId, x:event.clientX, left:container.scrollLeft, moved:false };
+            this.targetIndex = null;
+        });
+        container.addEventListener('pointermove', event => {
+            if (!drag || event.pointerId !== drag.id) return;
+            const distance = event.clientX - drag.x;
+            if (!drag.moved && Math.abs(distance) < 8) return;
+            if (!drag.moved) {
+                drag.moved = true; container.classList.add('is-dragging');
+                container.setPointerCapture(event.pointerId);
+            }
+            event.preventDefault();
+            container.scrollLeft = drag.left - distance;
+        });
+        const endDrag = event => {
+            if (!drag || event.pointerId !== drag.id) return;
+            if (drag.moved) suppressClickUntil = performance.now() + 350;
+            if (container.hasPointerCapture(event.pointerId)) container.releasePointerCapture(event.pointerId);
+            drag = null; container.classList.remove('is-dragging');
+        };
+        container.addEventListener('pointerup', endDrag);
+        container.addEventListener('pointercancel', endDrag);
+        container.addEventListener('lostpointercapture', endDrag);
+        container.addEventListener('pointerleave', event => { if (drag && !drag.moved) endDrag(event); });
+        container.addEventListener('click', event => {
+            if (performance.now() < suppressClickUntil) { event.preventDefault(); event.stopPropagation(); }
+        }, true);
+        document.getElementById('scene-category').addEventListener('keydown', event => {
+            if (event.target.closest('input,textarea,select,.cat-tools') || event.altKey || event.ctrlKey || event.metaKey) return;
+            const steps = { ArrowLeft:-1, ArrowRight:1, PageUp:-3, PageDown:3 };
+            if (Object.hasOwn(steps,event.key)) {
+                event.preventDefault(); this.step(steps[event.key], true);
+            }
+        });
         window.addEventListener('resize', () => this.refresh(), { passive: true });
     },
     cards() { return Array.from(document.querySelectorAll('#categoryGrid .cat-card')); },
@@ -507,11 +668,13 @@ const PackScroller = {
             return distance < best.distance ? { index, distance } : best;
         }, { index: 0, distance: Infinity }).index;
     },
-    step(direction) {
+    step(direction, focus = false) {
         const cards = this.cards();
         if (!cards.length) return;
-        const index = Math.max(0, Math.min(cards.length - 1, this.activeIndex() + direction));
-        cards[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        const index = Math.max(0, Math.min(cards.length - 1, (this.targetIndex ?? this.activeIndex()) + direction));
+        this.targetIndex = index;
+        if (focus) cards[index].focus({preventScroll:true});
+        cards[index].scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches || document.body.classList.contains('reduce-motion') ? 'instant' : 'smooth', block: 'nearest', inline: 'center' });
         window.setTimeout(() => this.refresh(), 280);
     },
     refresh() {
@@ -530,7 +693,7 @@ const ChartSelection = {
         State.currSongId = entry.song.id;
         State.currDiff = entry.diff;
         Render.songList();
-        Preview.select(entry.song, autoplay && changedSong);
+        Preview.select(entry.song, autoplay && (changedSong || !Preview.playing));
         if (scroll) requestAnimationFrame(() => {
             const key = `${entry.song.id}::${entry.diff}`;
             const row = Array.from(document.querySelectorAll('.song-row')).find(element => element.dataset.entryKey === key);
@@ -567,7 +730,7 @@ const Preview = {
     get config() {
         const song = State.currentSong;
         if (State.currDiff === 'WMS' && song && Object.hasOwn(song, 'WMS_previewUrl')) {
-            return { url: song.WMS_previewUrl || '', start: 0, end: null, source: song.WMS_previewUrl ? 'iTunes' : '', sourceUrl: song.WMS_previewSourceUrl || '' };
+            return { url: song.WMS_previewUrl || '', start: 0, end: null, source: /\.itunes\.apple\.com\//i.test(song.WMS_previewUrl || '') ? 'iTunes' : '', sourceUrl: song.WMS_previewSourceUrl || '' };
         }
         return song?.preview || {};
     },
@@ -590,6 +753,7 @@ const Preview = {
         const song = State.currentSong;
         const config = this.config;
         if (!config.url || this.muted || this.externalOnly) return this.render();
+        clearInterval(this.fadeTimer);
         let resolved = config.url;
         try { resolved = new URL(config.url, location.href).href; } catch {}
         if (this.audio.src !== resolved) {
@@ -649,8 +813,6 @@ const Preview = {
         const elapsed = Math.max(0, this.audio.currentTime - start);
         if (Number.isFinite(end) && end - this.audio.currentTime < .8 && end > this.audio.currentTime) this.audio.volume = Math.max(.04, (end - this.audio.currentTime) / .8);
         if (this.audio.currentTime >= end) this.restart();
-        document.getElementById('previewProgress').style.width = `${Math.min(100, elapsed / duration * 100)}%`;
-        document.getElementById('previewStatus').innerText = `${this.time(elapsed)} / ${this.time(duration)} · LOOP`;
     },
     restart() {
         if (this.looping || this.muted || !this.config.url) return;
@@ -670,28 +832,23 @@ const Preview = {
     },
     toggleMute() {
         this.muted = !this.muted;
+        try { localStorage.setItem('QUALITHM_MUTE', String(this.muted)); } catch {}
         if (this.muted) this.stop();
         const icon = document.querySelector('#audioToggle i');
         icon.className = this.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
         document.getElementById('audioToggle').classList.toggle('active', this.muted);
+        if (!this.muted && document.querySelector('#scene-music.active')) this.play();
         this.render();
     },
     time(seconds) { return Number.isFinite(seconds) ? `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}` : '--:--'; },
     render(message) {
-        const button = document.getElementById('previewToggle');
-        if (!button) return;
         const available = this.externalOnly ? /^https:\/\/music\.apple\.com\//i.test(this.config.sourceUrl || '') : Boolean(this.config.url);
-        button.disabled = !available;
-        button.classList.toggle('playing', this.playing);
-        button.querySelector('i').className = this.externalOnly ? 'fa-solid fa-arrow-up-right-from-square' : this.playing ? 'fa-solid fa-pause' : 'fa-solid fa-play';
-        button.title = this.externalOnly ? '在 Apple Music 打开官方试听，不作为站内循环音频' : 'Play / pause authorized preview';
-        if (!this.playing) document.getElementById('previewProgress').style.width = '0%';
-        document.getElementById('previewStatus').innerText = message || (available ? (this.externalOnly ? '官方试听 ↗ APPLE MUSIC' : this.muted ? 'PREVIEW MUTED' : 'READY · FADE / LOOP') : 'NO AUDIO');
-        const source = document.getElementById('previewSource');
-        const sourceUrl = this.config.sourceUrl || '';
-        const safeSource = /^https?:\/\//i.test(sourceUrl);
-        source.classList.toggle('hidden', !safeSource);
-        if (safeSource) source.href = sourceUrl;
+        const toggle = document.getElementById('audioToggle');
+        if (!toggle) return;
+        toggle.title = message || (available ? (this.externalOnly ? '打开官方试听' : this.muted ? '取消试听静音' : '试听静音') : '当前曲目未设置试听');
+        toggle.setAttribute('aria-label', toggle.title);
+        toggle.dataset.previewStatus = message || '';
+        globalThis.SelectionText?.refresh();
     }
 };
 
@@ -707,6 +864,7 @@ const Render = {
         PackScroller.refresh();
     },
     categoryGrid() {
+        PackScroller.targetIndex = null;
         const grid = document.getElementById('categoryGrid');
         grid.innerHTML = '';
         const allChartCount = State.songs.reduce((sum, song) => sum + CHART_KEYS.filter(key => song.difficulties?.[key] !== undefined).length, 0);
@@ -725,19 +883,20 @@ const Render = {
                 ? songCount
                 : scopedSongs.reduce((sum, song) => sum + CHART_KEYS.filter(key => song.difficulties?.[key] !== undefined).length, 0);
 
-            let stackClass = '';
-            if (songCount > 8) stackClass = 'stack-3';
-            else if (songCount > 4) stackClass = 'stack-2';
-            
-            card.className = `cat-card tilted ${stackClass} ${cat === 'Level' ? 'level-card' : ''}`;
+            card.className = `cat-card ${cat === 'Level' ? 'level-card' : ''}`;
             card.dataset.packIndex = String(index);
-            card.style.setProperty('--r', Utils.randomTilt());
+            card.dataset.packKey = cat;
+            card.dataset.songCount = String(songCount);
+            card.dataset.chartCount = String(chartCount);
             
             const meta = State.meta.catMeta[cat] || {};
             const fallbackSongCover = scopedSongs[0]?.coverUrl || (['All Songs', 'Level'].includes(cat) ? State.songs[0]?.coverUrl : '');
-            const cover = [meta.cover, DEFAULT_CAT_COVERS[cat], fallbackSongCover].find(url => Utils.isBrowserAsset(url)) || '';
+            const bundledCover = scopedSongs.map(song => Utils.assetURL(song.coverUrl)).find(url => /^assets\//.test(url));
+            const cover = [meta.cover, DEFAULT_CAT_COVERS[cat], fallbackSongCover].map(url => Utils.assetURL(url)).find(Boolean) || '';
             const isContain = meta.fit === 'contain';
             const isVirtual = ['All Songs', 'Favorites', 'Level', 'WHIMSY'].includes(cat);
+            const symbolOnly = (isVirtual && cat !== 'WHIMSY') || cat === 'Varieties' || cat === 'VARIETY';
+            if (symbolOnly) card.classList.add('functional-pack');
             const tools = isVirtual ? '' : `
                 <div class="cat-tools dev-only hidden">
                     <button class="btn-mini" data-action="prev" aria-label="Move pack left"><i class="fa-solid fa-arrow-left"></i></button>
@@ -747,10 +906,10 @@ const Render = {
                 </div>`;
             
             card.innerHTML = `
-                <img class="cat-img ${isContain ? 'fit-contain' : ''}" src="${Utils.escapeHTML(cover)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
-                <div class="cat-index"><span>ARCHIVE ${String(index + 1).padStart(2, '0')}</span><span>${isVirtual ? 'SYSTEM' : 'PACK'}</span></div>
+                <div class="pack-facet" aria-hidden="true"></div>
+                ${symbolOnly ? '' : `<img class="cat-img ${isContain ? 'fit-contain' : ''}" src="${Utils.escapeHTML(cover)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">`}
                 <div class="cat-info">
-                    <div class="cnt">${songCount} SONGS // ${chartCount} CHARTS</div>
+                    <div class="cnt">${songCount} 首 · ${chartCount} 谱面</div>
                     <h3>${Utils.escapeHTML(cat)}</h3>
                     <div class="cat-subtitle">${Utils.escapeHTML(meta.sub || '')}</div>
                 </div>
@@ -759,11 +918,18 @@ const Render = {
             const image = card.querySelector('.cat-img');
             const placeholder = document.createElement('div');
             placeholder.className = 'cat-placeholder';
-            placeholder.innerText = cat;
+            const icon = { 'All Songs':'layer-group', 'Level':'signal', 'Favorites':'star', 'Varieties':'shapes', 'VARIETY':'shapes' }[cat] || 'compact-disc';
+            placeholder.innerHTML = `<i class="fa-solid fa-${icon}" aria-hidden="true"></i>`;
             card.prepend(placeholder);
-            if (!cover) { image.classList.add('image-error'); card.classList.add('image-fallback'); }
-            image.onerror = () => { image.classList.add('image-error'); card.classList.add('image-fallback'); };
-            image.onload = () => card.classList.remove('image-fallback');
+            if (!cover || symbolOnly) { image?.classList.add('image-error'); card.classList.add('image-fallback'); }
+            let usedBundledCover = false;
+            if (image) image.onerror = () => {
+                if (!usedBundledCover && bundledCover && bundledCover !== cover) {
+                    usedBundledCover = true; image.src = bundledCover; return;
+                }
+                image.classList.add('image-error'); card.classList.add('image-fallback');
+            };
+            if (image) image.onload = () => { image.classList.remove('image-error'); card.classList.remove('image-fallback'); };
             card.querySelector('.cat-tools')?.addEventListener('click', event => {
                 event.stopPropagation();
                 const action = event.target.closest('[data-action]')?.dataset.action;
@@ -773,9 +939,16 @@ const Render = {
                 if (action === 'delete') CatOps.delete(cat);
             });
             card.onclick = () => { State.currCat = cat; SceneManager.switch('music'); };
+            card.addEventListener('pointerdown', event => { if (event.pointerType === 'touch') card.classList.add('touch-reveal'); });
+            card.addEventListener('pointercancel', () => card.classList.remove('touch-reveal'));
+            card.tabIndex = 0;
+            card.setAttribute('role', 'button');
+            card.setAttribute('aria-label', cat);
+            card.onkeydown = event => { if (event.target === card && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); card.click(); } };
             grid.appendChild(card);
         });
-        document.getElementById('catCount').innerText = `${State.songs.length} SONGS // ${allChartCount} CHARTS // ${State.categories.length} ARCHIVES`;
+        document.getElementById('catCount').innerText = `${State.songs.length} SONGS · ${allChartCount} CHARTS`;
+        globalThis.SelectionText?.refresh();
         DevUI.sync();
         requestAnimationFrame(() => PackScroller.refresh());
     },
@@ -860,7 +1033,7 @@ const Render = {
             if (first) {
                 State.currSongId = first.song.id;
                 State.currDiff = first.diff;
-                Preview.select(first.song, false);
+                Preview.select(first.song, true);
             } else {
                 State.currSongId = null;
                 Preview.stop();
@@ -910,10 +1083,13 @@ const Render = {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'list-group';
             
-            const header = document.createElement('div');
+            const header = document.createElement('button');
+            header.type = 'button';
             header.className = 'group-header';
-            header.innerHTML = `<span>${State.sortMode.startsWith('level') ? headerText : Utils.escapeHTML(headerText)}<small> · ${groups[headerText].length} CHARTS</small></span>`;
-            header.onclick = () => groupDiv.classList.toggle('collapsed');
+            header.setAttribute('aria-expanded', 'true');
+            header.innerHTML = `<span class="group-label">${State.sortMode.startsWith('level') ? headerText : Utils.escapeHTML(headerText)}</span><small> · ${groups[headerText].length} CHARTS</small>`;
+            header.dataset.groupLabel = header.querySelector('.group-label').textContent;
+            header.onclick = () => { const collapsed = groupDiv.classList.toggle('collapsed'); header.setAttribute('aria-expanded', String(!collapsed)); };
             groupDiv.appendChild(header);
 
             const contentDiv = document.createElement('div');
@@ -947,8 +1123,8 @@ const Render = {
 
                 div.innerHTML = `
                     <div class="s-meta">
-                        ${song.subgroup || item.fallback ? `<span class="s-subgroup">${Utils.escapeHTML(song.subgroup || 'OTHERS')}${item.fallback ? ' · HYP→MET FALLBACK' : ''}</span>` : ''}
-                        <span class="s-title">${Utils.escapeHTML(displayTitle)}${song.hidden ? '<small class="hidden-mark">HIDDEN</small>' : ''}${UserState.has(song.id) ? '<i class="fa-solid fa-star favorite-mark" title="Favorite"></i>' : ''}</span>
+                        <span class="s-title">${Utils.titleHTML(displayTitle)}${song.hidden ? '<small class="hidden-mark">HIDDEN</small>' : ''}${UserState.has(song.id) ? '<i class="fa-solid fa-star favorite-mark" title="Favorite"></i>' : ''}</span>
+                        <span class="s-artist">${Utils.titleHTML(diff === 'HYP' && song.difficulties.HYP_artist ? song.difficulties.HYP_artist : song.artist)}</span>
                     </div>
                     <div class="s-info">
                         <div class="rate-box">
@@ -959,8 +1135,12 @@ const Render = {
                 `;
                 div.onclick = () => {
                     if (State.batchMode) BatchOps.toggleSelection(song.id);
-                    else ChartSelection.select(item, { autoplay: true });
+                    else { ChartSelection.select(item, { autoplay: true }); globalThis.MobileLibrary?.close(); }
                 };
+                div.tabIndex = 0;
+                div.setAttribute('role', 'button');
+                div.setAttribute('aria-current', String(isActive));
+                div.onkeydown = event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); div.click(); } };
                 contentDiv.appendChild(div);
             });
 
@@ -978,6 +1158,7 @@ const Render = {
         document.getElementById('detailBg').style.backgroundImage = 'none';
         const cover = document.getElementById('detailCover');
         cover.removeAttribute('src');
+        delete cover.dataset.asset;
         cover.classList.add('image-error');
         document.getElementById('detailTitle').innerText = 'NO CHARTS';
         document.getElementById('detailArtist').innerText = 'ADJUST THE CURRENT FILTER';
@@ -1030,36 +1211,56 @@ const Render = {
             if (diffObj.WMS_artist) displayArtist = diffObj.WMS_artist;
         }
 
-        document.getElementById('detailTitle').innerText = displayTitle;
-        document.getElementById('detailArtist').innerText = displayArtist;
+        document.getElementById('detailTitle').innerHTML = Utils.titleHTML(displayTitle);
+        document.getElementById('detailArtist').innerHTML = Utils.titleHTML(displayArtist);
         document.getElementById('detailBpm').innerText = song.bpm ?? '—';
         const extra = document.getElementById('detailAnnotations');
-        const duration = dKey === 'WMS' ? (song.WMS_durationMs || song.durationMs) : song.durationMs;
         extra.replaceChildren();
-        for (const text of [song.hidden ? 'HIDDEN' : '', dKey === 'WMS' && diffObj.WMS === '全' ? 'FULL VERSION' : '', song.alias || '', duration ? `${Math.floor(duration / 60000)}:${String(Math.floor(duration / 1000) % 60).padStart(2, '0')}` : ''].filter(Boolean)) {
+        const displayAlias = song.alias === '髓星' && song.title.includes('髄星') ? '' : (song.alias || '');
+        for (const text of [dKey === 'WMS' && diffObj.WMS === '全' ? 'FULL VERSION' : '', displayAlias].filter(Boolean)) {
             const tag = document.createElement('span'); tag.textContent = text; extra.appendChild(tag);
+            if (text === 'FULL VERSION') tag.dataset.selectionText = 'fullVersion';
         }
         document.getElementById('detailPack').innerText = song.category;
         document.getElementById('detailChartCount').innerText = CHART_KEYS.filter(key => song.difficulties[key] !== undefined).length;
         const detailCover = document.getElementById('detailCover');
-        const usableCover = Utils.isBrowserAsset(displayCover) ? displayCover : '';
+        const usableCover = Utils.assetURL(displayCover);
+        if (detailCover.dataset.asset !== usableCover) {
+        detailCover.dataset.asset = usableCover;
         detailCover.classList.toggle('image-error', !usableCover);
         let triedFallback = false;
         detailCover.onerror = () => {
             if (!triedFallback && Utils.isBrowserAsset(song.coverFallbackUrl) && song.coverFallbackUrl !== displayCover) {
-                triedFallback = true; detailCover.src = song.coverFallbackUrl;
+                triedFallback = true; detailCover.src = Utils.assetURL(song.coverFallbackUrl);
                 document.getElementById('detailBg').style.backgroundImage = 'none';
                 return;
             }
             detailCover.classList.add('image-error'); document.getElementById('detailBg').style.backgroundImage = 'none';
         };
         detailCover.onload = () => detailCover.classList.remove('image-error');
-        if (usableCover) detailCover.src = usableCover;
+        if (usableCover) {
+            if (detailCover.getAttribute('src') !== usableCover) detailCover.src = usableCover;
+        }
         else detailCover.removeAttribute('src');
-        document.getElementById('detailBg').style.backgroundImage = usableCover ? `url("${String(usableCover).replaceAll('"', '%22')}")` : 'none';
+        // The surrounding light is CSS-only: avoid decoding each jacket twice.
+        document.getElementById('detailBg').style.backgroundImage = 'none';
+        }
 
         const stamp = document.getElementById('ratingStamp');
         stamp.style.color = color;
+        const dossier = document.getElementById('songDossier');
+        const cardTone = globalThis.QualithmPalette?.cardForColor(color) || { edge:color, ink:'#252936', fill:'#252936' };
+        dossier.dataset.difficulty = dKey;
+        dossier.dataset.hidden = String(Boolean(song.hidden));
+        dossier.style.setProperty('--chart-edge', cardTone.edge);
+        dossier.style.setProperty('--chart-ink', cardTone.ink);
+        dossier.style.setProperty('--chart-fill', cardTone.fill);
+        dossier.style.setProperty('--chart-tint', cardTone.tint || '#d9deec');
+        dossier.style.setProperty('--chart-slot', cardTone.slot || '#27345c');
+        dossier.style.setProperty('--chart-slot-night', cardTone.nightSlot || '#1b2858');
+        dossier.style.setProperty('--chart-slot-ink', cardTone.slotInk || '#ccd5f7');
+        dossier.style.setProperty('--chart-night-name', cardTone.nameInk || '#ccd5f7');
+        dossier.style.setProperty('--chart-night-name-shade', cardTone.nameShade || '#a5b3d4');
         
         if (dKey === 'HYP') stamp.classList.add('hyp-style');
         else stamp.classList.remove('hyp-style');
@@ -1070,10 +1271,23 @@ const Render = {
 
         let displayVal = Utils.formatRough(dVal);
         if (dKey === 'WMS' && typeof dVal === 'string') displayVal = Utils.escapeHTML(dVal);
-        else if (State.isPrecise) displayVal = Utils.formatPrecise(dVal);
+        else if (State.isPrecise) {
+            displayVal = Utils.formatPrecise(dVal);
+            if (typeof dVal === 'number') displayVal = displayVal.replace(/^(.*)\.(\d+)$/, '<span class="rating-integer">$1</span><span class="rating-fraction"><span class="rating-dot">.</span><span class="rating-decimal">$2</span></span>');
+        }
 
         document.getElementById('stampLabel').innerText = labelFull;
         document.getElementById('stampVal').innerHTML = displayVal;
+        const ratingText = document.getElementById('stampVal').textContent;
+        dossier.dataset.ratingMode = State.isPrecise ? 'precise' : 'rough';
+        const textRating = dKey === 'WMS' && typeof dVal === 'string';
+        dossier.dataset.ratingKind = textRating ? 'text' : 'number';
+        const ratingLength = ratingText.replace(/\+$/, '').length;
+        dossier.dataset.plusLayout = !textRating && !State.isPrecise && ratingLength === 1 ? 'inline' : 'overlap';
+        const ratingBase = State.isPrecise ? (ratingLength <= 3 ? 82 : 100) : 78;
+        const ratingWidth = textRating ? Math.max(76, Array.from(ratingText).reduce((width,char)=>width+(/[\x00-\x7f]/.test(char)?16:32),30)) : ratingBase + Math.max(0, ratingLength - (State.isPrecise ? 4 : 2)) * 20;
+        dossier.style.setProperty('--rating-width', `${ratingWidth}px`);
+        stamp.setAttribute('aria-label', `${labelFull} ${document.getElementById('stampVal').textContent}`);
 
         const tabs = document.getElementById('diffTabs');
         tabs.innerHTML = '';
@@ -1082,13 +1296,24 @@ const Render = {
             if (song.difficulties[k] === undefined && (k === 'HYP' || k === 'WMS')) return;
             if (song.difficulties[k] === undefined) return;
 
-            const btn = document.createElement('div');
+            const btn = document.createElement('button');
+            btn.type = 'button';
             btn.className = `d-tab ${k === dKey ? 'active' : ''}`;
             btn.dataset.type = k;
+            btn.setAttribute('aria-pressed', String(k === dKey));
             
             const kColor = CONFIG.colors[k];
             btn.style.setProperty('--col-ref', kColor);
             btn.style.setProperty('--tab-bg', Utils.glassColor(kColor));
+            const glass = globalThis.QualithmPalette?.glassForColor(kColor);
+            if (glass) {
+                btn.style.setProperty('--tab-wash', glass.wash);
+                btn.style.setProperty('--tab-night-wash', glass.nightWash);
+                btn.style.setProperty('--tab-night-ink', glass.nightInk);
+                btn.style.setProperty('--tab-ink', glass.ink);
+                btn.style.setProperty('--tab-active-fill', glass.activeFill);
+                btn.style.setProperty('--tab-active-ink', glass.activeInk);
+            }
             
             let tabVal = song.difficulties[k];
             let tabValStr = Utils.formatRough(tabVal);
@@ -1113,6 +1338,7 @@ const Render = {
         document.getElementById('wmsStripe').classList.toggle('hidden', dKey !== 'WMS');
         UserState.renderFavorite();
         Preview.render();
+        globalThis.QualithmText?.refresh();
     }
 };
 
@@ -1315,7 +1541,7 @@ const Editor = {
             }
             Render.songList();
         };
-        document.getElementById('quickPackSelect').onchange = event => QuickPack.select(event.target.value);
+        QuickPack.init();
         document.getElementById('quickPackPrev').onclick = () => QuickPack.step(-1);
         document.getElementById('quickPackNext').onclick = () => QuickPack.step(1);
         document.getElementById('chartFilterOptions').onclick = event => {
@@ -1551,8 +1777,7 @@ const Editor = {
 };
 
 document.getElementById('themeToggle').onclick = Utils.toggleTheme;
-document.getElementById('audioToggle').onclick = () => Preview.toggleMute();
-document.getElementById('previewToggle').onclick = () => Preview.toggle();
+document.getElementById('audioToggle').onclick = () => Preview.externalOnly ? Preview.toggle() : Preview.toggleMute();
 document.getElementById('dlDataBtn').onclick = Utils.exportData;
 document.getElementById('preciseToggle').onclick = function() {
     State.isPrecise = !State.isPrecise;
@@ -1561,10 +1786,21 @@ document.getElementById('preciseToggle').onclick = function() {
 };
 document.getElementById('searchInput').addEventListener('input', () => Render.songList());
 window.addEventListener('DOMContentLoaded', async () => {
+    let theme = 'light';
+    try { theme = localStorage.getItem('QUALITHM_THEME') === 'dark' ? 'dark' : 'light'; } catch {}
+    document.body.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    globalThis.QualithmPalette?.applyTheme(theme);
     ViewportManager.init();
     Preview.init();
     UserState.init();
     await DB.init();
     Editor.init();
+    LocalArt.init();
+    for (const [id, label] of [['themeToggle','THEME'],['audioToggle','AUDIO'],['btnImport','IMPORT'],['dlDataBtn','EXPORT'],['btnExportJS','SEED']]) {
+        const caption = document.createElement('span'); caption.className = 'utility-label'; caption.textContent = label;
+        document.getElementById(id).appendChild(caption);
+        document.getElementById(id).setAttribute('aria-label', document.getElementById(id).title || label);
+    }
     SceneManager.switch('menu');
 });
