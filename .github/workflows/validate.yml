@@ -15,5 +15,6 @@ jobs:
       - run: node --check palette.js
       - run: node --check catalog-updates.js
       - run: node --check local-art.js
+      - run: node --check screenshot-export.js
       - run: node tools/sync-seed.mjs --check
       - run: node tests/release-check.cjs

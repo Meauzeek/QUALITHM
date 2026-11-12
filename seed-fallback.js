@@ -219,7 +219,7 @@ globalThis.QUALITHM_SEED = {
       "difficulties": {
         "MET": 15.5,
         "HYP": 16,
-        "HYP_cover": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/c5/22/91/c5229155-e643-540c-bbfc-b257b17ceb38/4571164388946_cover.jpg/600x600bb.jpg",
+        "HYP_cover": "assets/jackets/tiamat-hyp.jpg",
         "WMS": "狂",
         "NUL": 7.5,
         "PHM": 11.8,

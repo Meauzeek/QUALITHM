@@ -22,6 +22,7 @@ async function main() {
   const url = `http://127.0.0.1:${server.address().port}`;
   try {
     for (const viewport of [{ width: 1366, height: 768 }, { width: 1920, height: 1080 }, { width: 390, height: 844 }, { width: 844, height: 390 }]) {
+      const compactLandscape = viewport.width <= 1000 && viewport.height <= 500 && viewport.width > viewport.height;
       const context = await browser.newContext({ viewport, reducedMotion: 'reduce' });
       const page = await context.newPage();
       const glassReport = [];
@@ -245,7 +246,7 @@ async function main() {
         height: e.clientHeight,
         content: e.scrollHeight
       }));
-      assert(difficultyType.number >= 28 && difficultyType.label >= 15, 'Difficulty labels must remain legible at native scale');
+      assert(difficultyType.number >= (compactLandscape ? 18 : 28) && difficultyType.label >= (compactLandscape ? 12 : 15), 'Difficulty labels must remain legible at native scale');
       assert(difficultyType.content <= difficultyType.height + 1, 'Enlarged difficulty text must not overflow its button');
       await page.locator('#chartFilterOptions [data-diff="HYP"]').click();
       assert.equal(await page.locator('.song-row[data-difficulty="MET"]').count(), 4);
@@ -454,7 +455,7 @@ async function main() {
         assert.equal(await page.locator('#songDossier').getAttribute('data-difficulty'), diff);
         assert(await activeTab.evaluate(e => getComputedStyle(e).backgroundImage.includes('radial-gradient')), 'Night glass veils a theme-color glow');
         assert.equal(await activeTab.evaluate(e => chroma(getComputedStyle(e).color).hex()), await activeTab.evaluate(e => chroma(e.style.getPropertyValue('--tab-active-ink')).hex()), 'Night selection uses contrast-adjusted theme ink');
-        assert.equal(await page.locator('#stampLabel').evaluate(e => getComputedStyle(e).fontSize),'52px','All difficulty names retain identical type height');
+        assert.equal(await page.locator('#stampLabel').evaluate(e => getComputedStyle(e).fontSize),compactLandscape ? '36px' : '52px','All difficulty names retain identical type height');
         assert(await page.locator('.chart-name-glyph').evaluate(e => new DOMMatrixReadOnly(getComputedStyle(e).transform).a >= .9), 'Long difficulty names retain at least 90% of natural glyph width');
         await checkRenderedGlass();
         if (process.env.QUALITHM_SCREENSHOTS && viewport.width === 1366) {

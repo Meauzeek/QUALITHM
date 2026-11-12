@@ -15,6 +15,10 @@ QUALITHM 是音游企划展示，不代表与页面涉及的游戏、作曲者�
 - Archivo Black：旧版试用字体，当前不加载。本地 TTF 来自 [Google Fonts 官方仓库](https://github.com/google/fonts/tree/main/ofl/archivoblack)，SIL OFL 1.1，许可见 [OFL-ArchivoBlack.txt](assets/fonts/OFL-ArchivoBlack.txt)。
 - Barlow Semi Condensed ExtraBold：旧版试用字体，当前不加载。SIL OFL 1.1，许可见 assets/fonts/OFL-BarlowSemiCondensed.txt。
 
+## 截图工具
+
+Modern Screenshot 4.7.0：本地打包，用于页面、独立卡片和多难度合成图的 PNG 导出。MIT 许可见 [modern-screenshot-LICENSE.txt](assets/vendor/modern-screenshot-LICENSE.txt)，来源与接口说明见 [官方仓库](https://github.com/qq15725/modern-screenshot)。
+
 ## 配色工具
 
 Chroma.js 3.2.0（Gregor Aisch）随站点本地分发，采用 BSD-3-Clause；内含 ColorBrewer 配色数据采用 Apache-2.0。原始声明见 [chroma-LICENSE.txt](assets/vendor/chroma-LICENSE.txt)，Apache 完整许可见 [Apache-2.0.txt](assets/vendor/Apache-2.0.txt)。固定版本的浏览器发行文件来自官方文档链接的 [npm / unpkg 发行包](https://unpkg.com/chroma-js@3.2.0/dist/chroma.min.cjs)。本项目使用其 OKLCH 与 contrast 功能调整 MET 色彩，未修改库的实现。

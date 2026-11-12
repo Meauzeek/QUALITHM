@@ -1,6 +1,7 @@
 // Published changes only apply where a local value still matches the previous release.
 // The before/after pairs are historical migration records, not another live seed.
 globalThis.QUALITHM_CATALOG_UPDATES = [
+  { id: '2026-11-12-tiamat-hyp-art', songs: [{id:'c1', difficulties:{HYP_cover:{before:'https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/c5/22/91/c5229155-e643-540c-bbfc-b257b17ceb38/4571164388946_cover.jpg/600x600bb.jpg',after:'assets/jackets/tiamat-hyp.jpg'}}}]},
   { id: '2026-11-12-markstern-kanji', songs: [{id:'16150cf2-714c-42aa-a075-f02da9b1d426', fields: {
     title: {before:'《髓星》 -Doppelkonzert für Violine und Violoncello Nr. 7, Markstern-', after:'《髄星》 -Doppelkonzert für Violine und Violoncello Nr. 7, Markstern-'},
     alias: {after:'髓星'}

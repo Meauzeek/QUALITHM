@@ -328,7 +328,8 @@ body[data-theme="dark"] #scene-music .song-row.active.hyp-active { background:li
 /* v8.9: consistent small text, cut-glass filter rail and themed pack selector. */
 #scene-music .chart-name { font-weight:700; font-synthesis:weight; }
 .s-artist,#scene-music .song-dossier #detailArtist,.cnt,.cat-subtitle,#catCount { font-family:'QUALITHM Caption','IBM Plex Sans JP','Noto Sans SC',sans-serif; font-weight:500; letter-spacing:0; line-height:1.4; }
-#scene-music .chart-filter-options { gap:2px; padding:2px 5px; background:linear-gradient(120deg,var(--edge-shade),transparent 70%); }
+/* The transparent rail casts a separate shadow from each clipped button silhouette. */
+#scene-music .chart-filter-options { gap:2px; padding:2px 5px; background:transparent; overflow:visible; filter:drop-shadow(0 2px 2px var(--ambient-shadow)); }
 #scene-music .chart-filter-options button { position:relative; min-width:70px; min-height:40px; padding:0 20px; border:0; color:var(--tx-sub); font-size:18px; font-weight:700; clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%); background:linear-gradient(132deg,var(--plane-top),var(--plane)); box-shadow:inset 0 1px var(--edge-light),inset 0 -1px var(--edge-shade); }
 #scene-music .chart-filter-options button::after { content:''; position:absolute; bottom:0; height:3px; left:10px; right:10px; background:transparent; transform:skewX(-14deg); }
 #scene-music .chart-filter-options button:hover { color:var(--tx-main); background:var(--surface); }

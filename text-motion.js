@@ -53,8 +53,11 @@
             if (!content) continue;
             if (host.id === 'stampLabel') {
                 const short = content.textContent.length <= 5;
-                content.style.letterSpacing = short ? '.035em' : '0';
-                const scale = short ? Math.min(1.22, Math.max(.90, host.clientWidth * .86 / content.offsetWidth)) : Math.min(1, Math.max(.90, (host.clientWidth - 4) / content.offsetWidth));
+                content.style.letterSpacing = '0';
+                const roomy = host.clientWidth - content.offsetWidth > 24;
+                // Longer names such as WHIMSY also use spare room; preserve the common cap height.
+                content.style.letterSpacing = short ? '.035em' : roomy ? '.018em' : '0';
+                const scale = short ? Math.min(1.22, Math.max(.90, host.clientWidth * .86 / content.offsetWidth)) : Math.min(roomy ? 1.12 : 1, Math.max(.90, (roomy ? host.clientWidth * .92 : host.clientWidth - 4) / content.offsetWidth));
                 host.style.setProperty('--name-scale', scale.toFixed(4));
                 host.style.setProperty('--name-left', `${Math.max(0, (host.clientWidth - content.offsetWidth * scale) / 2)}px`);
                 continue;
@@ -68,8 +71,8 @@
             host.tabIndex = distance > 1 ? 0 : -1;
         }
     }
-    function refresh() {
-        document.querySelectorAll('#detailTitle,#detailArtist,.s-title,.s-artist,#stampLabel,#stampVal,.btn-start-large .t-main,.cat-info h3').forEach(host => {
+    function refresh(root = document) {
+        root.querySelectorAll('#detailTitle,#detailArtist,.s-title,.s-artist,#stampLabel,#stampVal,.btn-start-large .t-main,.cat-info h3').forEach(host => {
             if (host.matches('.cat-info h3')) { if (!observed.has(host)) { observed.add(host); observer.observe(host); } return; }
             if (host.matches('.btn-start-large .t-main')) { if (!observed.has(host)) { observed.add(host); observer.observe(host); observer.observe(host.parentElement); } return; }
             if (host.id === 'stampVal') { if (!observed.has(host)) { observed.add(host); observer.observe(host); } return; }
@@ -87,5 +90,5 @@
     }
     document.addEventListener('DOMContentLoaded', () => { refresh(); document.fonts.ready.then(schedule); });
     document.fonts.addEventListener('loadingdone', schedule);
-    globalThis.QualithmText = { refresh };
+    globalThis.QualithmText = { refresh, measure };
 })();

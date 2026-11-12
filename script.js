@@ -8,7 +8,7 @@ const CONFIG = {
         HYP: '#9270d6', WMS: '#888888'
     },
     labels: {
-        NUL: 'NULL', PHM: 'PHANTOM', DEC: 'DECAY', 
+        NUL: 'NULL', PHM: 'PHASM', DEC: 'DECAY', 
         MET: 'META', HYP: 'HYPER', WMS: 'WHIMSY'
     },
     defaultDifficulties: { NUL: 1.0, PHM: 5.0, DEC: 9.0, MET: 12.0 },
@@ -1175,22 +1175,9 @@ const Render = {
         Preview.render();
     },
 
-    songDetail() {
-        const song = State.currentSong;
-        if (!song) return;
-        document.getElementById('detailPanel').classList.remove('empty');
-        document.getElementById('btnEditSong').disabled = false;
-        
-        let dKey = State.isWhimsyCat ? 'WMS' : State.currDiff;
-        if (song.difficulties[dKey] === undefined) {
-             const entry = State.isLevelCat ? ChartPolicy.levelEntries(song)[0] : ChartPolicy.ordinaryEntry(song);
-             dKey = entry?.diff || CHART_KEYS.find(key => song.difficulties[key] !== undefined);
-        }
-        if (!dKey) return;
-        State.currDiff = dKey;
-        const previewKey = `${song.id}::${Preview.config.url || ''}`;
-        if (Preview.songId !== previewKey) Preview.select(song, false);
-
+    // Shared by the live detail and isolated export; does not change selection or audio.
+    songCard(song, dKey, dossier, precise = State.isPrecise) {
+        const part = id => dossier.querySelector('[id="' + id + '"]');
         const diffObj = song.difficulties;
         const dVal = diffObj[dKey];
         const color = CONFIG.colors[dKey];
@@ -1211,44 +1198,40 @@ const Render = {
             if (diffObj.WMS_artist) displayArtist = diffObj.WMS_artist;
         }
 
-        document.getElementById('detailTitle').innerHTML = Utils.titleHTML(displayTitle);
-        document.getElementById('detailArtist').innerHTML = Utils.titleHTML(displayArtist);
-        document.getElementById('detailBpm').innerText = song.bpm ?? '—';
-        const extra = document.getElementById('detailAnnotations');
+        part('detailTitle').innerHTML = Utils.titleHTML(displayTitle);
+        part('detailArtist').innerHTML = Utils.titleHTML(displayArtist);
+        part('detailBpm').innerText = song.bpm ?? '—';
+        const extra = part('detailAnnotations');
         extra.replaceChildren();
         const displayAlias = song.alias === '髓星' && song.title.includes('髄星') ? '' : (song.alias || '');
         for (const text of [dKey === 'WMS' && diffObj.WMS === '全' ? 'FULL VERSION' : '', displayAlias].filter(Boolean)) {
-            const tag = document.createElement('span'); tag.textContent = text; extra.appendChild(tag);
+            const tag = dossier.ownerDocument.createElement('span'); tag.textContent = text; extra.appendChild(tag);
             if (text === 'FULL VERSION') tag.dataset.selectionText = 'fullVersion';
         }
-        document.getElementById('detailPack').innerText = song.category;
-        document.getElementById('detailChartCount').innerText = CHART_KEYS.filter(key => song.difficulties[key] !== undefined).length;
-        const detailCover = document.getElementById('detailCover');
+        part('detailPack').innerText = song.category;
+        part('detailChartCount').innerText = CHART_KEYS.filter(key => song.difficulties[key] !== undefined).length;
+        const detailCover = part('detailCover');
         const usableCover = Utils.assetURL(displayCover);
         if (detailCover.dataset.asset !== usableCover) {
-        detailCover.dataset.asset = usableCover;
-        detailCover.classList.toggle('image-error', !usableCover);
-        let triedFallback = false;
-        detailCover.onerror = () => {
-            if (!triedFallback && Utils.isBrowserAsset(song.coverFallbackUrl) && song.coverFallbackUrl !== displayCover) {
-                triedFallback = true; detailCover.src = Utils.assetURL(song.coverFallbackUrl);
-                document.getElementById('detailBg').style.backgroundImage = 'none';
-                return;
-            }
-            detailCover.classList.add('image-error'); document.getElementById('detailBg').style.backgroundImage = 'none';
-        };
-        detailCover.onload = () => detailCover.classList.remove('image-error');
-        if (usableCover) {
-            if (detailCover.getAttribute('src') !== usableCover) detailCover.src = usableCover;
-        }
-        else detailCover.removeAttribute('src');
-        // The surrounding light is CSS-only: avoid decoding each jacket twice.
-        document.getElementById('detailBg').style.backgroundImage = 'none';
+            detailCover.dataset.asset = usableCover;
+            detailCover.classList.toggle('image-error', !usableCover);
+            let triedFallback = false;
+            detailCover.onerror = () => {
+                if (!triedFallback && Utils.isBrowserAsset(song.coverFallbackUrl) && song.coverFallbackUrl !== displayCover) {
+                    triedFallback = true;
+                    detailCover.src = Utils.assetURL(song.coverFallbackUrl);
+                    return;
+                }
+                detailCover.classList.add('image-error');
+            };
+            detailCover.onload = () => detailCover.classList.remove('image-error');
+            if (usableCover) {
+                if (detailCover.getAttribute('src') !== usableCover) detailCover.src = usableCover;
+            } else detailCover.removeAttribute('src');
         }
 
-        const stamp = document.getElementById('ratingStamp');
+        const stamp = part('ratingStamp');
         stamp.style.color = color;
-        const dossier = document.getElementById('songDossier');
         const cardTone = globalThis.QualithmPalette?.cardForColor(color) || { edge:color, ink:'#252936', fill:'#252936' };
         dossier.dataset.difficulty = dKey;
         dossier.dataset.hidden = String(Boolean(song.hidden));
@@ -1271,23 +1254,45 @@ const Render = {
 
         let displayVal = Utils.formatRough(dVal);
         if (dKey === 'WMS' && typeof dVal === 'string') displayVal = Utils.escapeHTML(dVal);
-        else if (State.isPrecise) {
+        else if (precise) {
             displayVal = Utils.formatPrecise(dVal);
             if (typeof dVal === 'number') displayVal = displayVal.replace(/^(.*)\.(\d+)$/, '<span class="rating-integer">$1</span><span class="rating-fraction"><span class="rating-dot">.</span><span class="rating-decimal">$2</span></span>');
         }
 
-        document.getElementById('stampLabel').innerText = labelFull;
-        document.getElementById('stampVal').innerHTML = displayVal;
-        const ratingText = document.getElementById('stampVal').textContent;
-        dossier.dataset.ratingMode = State.isPrecise ? 'precise' : 'rough';
+        part('stampLabel').innerText = labelFull;
+        part('stampVal').innerHTML = displayVal;
+        const ratingText = part('stampVal').textContent;
+        dossier.dataset.ratingMode = precise ? 'precise' : 'rough';
         const textRating = dKey === 'WMS' && typeof dVal === 'string';
         dossier.dataset.ratingKind = textRating ? 'text' : 'number';
         const ratingLength = ratingText.replace(/\+$/, '').length;
-        dossier.dataset.plusLayout = !textRating && !State.isPrecise && ratingLength === 1 ? 'inline' : 'overlap';
-        const ratingBase = State.isPrecise ? (ratingLength <= 3 ? 82 : 100) : 78;
-        const ratingWidth = textRating ? Math.max(76, Array.from(ratingText).reduce((width,char)=>width+(/[\x00-\x7f]/.test(char)?16:32),30)) : ratingBase + Math.max(0, ratingLength - (State.isPrecise ? 4 : 2)) * 20;
+        dossier.dataset.plusLayout = !textRating && !precise && ratingLength === 1 ? 'inline' : 'overlap';
+        const ratingBase = precise ? (ratingLength <= 3 ? 82 : 100) : 78;
+        const ratingWidth = textRating ? Math.max(76, Array.from(ratingText).reduce((width,char)=>width+(/[\x00-\x7f]/.test(char)?16:32),30)) : ratingBase + Math.max(0, ratingLength - (precise ? 4 : 2)) * 20;
         dossier.style.setProperty('--rating-width', `${ratingWidth}px`);
-        stamp.setAttribute('aria-label', `${labelFull} ${document.getElementById('stampVal').textContent}`);
+        stamp.setAttribute('aria-label', `${labelFull} ${part('stampVal').textContent}`);
+
+        part('wmsStripe').classList.toggle('hidden', dKey !== 'WMS');
+    },
+
+    songDetail() {
+        const song = State.currentSong;
+        if (!song) return;
+        document.getElementById('detailPanel').classList.remove('empty');
+        document.getElementById('btnEditSong').disabled = false;
+        
+        let dKey = State.isWhimsyCat ? 'WMS' : State.currDiff;
+        if (song.difficulties[dKey] === undefined) {
+             const entry = State.isLevelCat ? ChartPolicy.levelEntries(song)[0] : ChartPolicy.ordinaryEntry(song);
+             dKey = entry?.diff || CHART_KEYS.find(key => song.difficulties[key] !== undefined);
+        }
+        if (!dKey) return;
+        State.currDiff = dKey;
+        const previewKey = `${song.id}::${Preview.config.url || ''}`;
+        if (Preview.songId !== previewKey) Preview.select(song, false);
+
+        this.songCard(song, dKey, document.getElementById('songDossier'));
+        document.getElementById('detailBg').style.backgroundImage = 'none';
 
         const tabs = document.getElementById('diffTabs');
         tabs.innerHTML = '';

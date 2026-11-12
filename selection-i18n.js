@@ -14,6 +14,19 @@
  const dictionaries=Object.fromEntries(Object.entries(rows).map(([code,row])=>{const values=row.split('|'); if(values.length!==keys.length)throw new Error(`Selection locale ${code}: ${values.length}/${keys.length}`);return [code,Object.fromEntries(keys.map((key,i)=>[key,values[i]]))];}));
  // Labels preceding a value must not reuse counted units such as “张谱面”.
  for(const [code,label] of Object.entries({en:'CHARTS',zh:'谱面数量','zh-Hant':'譜面數量',ja:'譜面数',fr:'PARTITIONS',ko:'채보 수',es:'PARTITURAS',iu:'ᐃᓐᖏᐅᑎᓄᑦ ᓇᓗᓇᐃᒃᑯᑕᑦ'})) dictionaries[code].chartCountLabel=label;
+ for(const [code,label] of Object.entries({en:'Export images',zh:'导出图片','zh-Hant':'匯出圖片',ja:'画像保存',fr:'Exporter des images',ko:'이미지 내보내기',es:'Exportar imágenes',iu:'ᐊᔾᔨ ᑐᖅᑯᕐᓗᒍ'})) dictionaries[code].screenshot=label;
+ const captureKeys='captureTitle|capturePage|captureCard|captureBoard|captureChoose|captureAll|captureNone|captureExport|captureWorking|captureDone|captureFailed|captureNoSong'.split('|');
+ const captureRows={
+  en:'Export image|Page screenshot|Current chart card|Difficulty collection|Choose difficulties|All|Clear|Export collection|Generating PNG…|PNG generated|Image export failed. Please retry.|Select a song first',
+  zh:'导出图片|页面截图|当前曲目卡片|多难度合成图|勾选难度|全选|清空|导出合成图|正在生成 PNG…|PNG 已生成|图片导出失败，请重试。|请先选择曲目',
+  'zh-Hant':'匯出圖片|頁面截圖|目前曲目卡片|多難度合成圖|勾選難度|全選|清空|匯出合成圖|正在產生 PNG…|PNG 已產生|圖片匯出失敗，請重試。|請先選擇曲目',
+  ja:'画像保存|画面全体|選択中の譜面|難易度別一覧画像|難易度を選択|全選択|解除|一覧画像を保存|PNG 生成中…|PNG を生成しました|画像の保存に失敗しました。再試行してください。|楽曲を選択してください',
+  fr:'Exporter une image|Capture de la page|Carte actuelle|Collection de difficultés|Choisir les difficultés|Tout|Effacer|Exporter la collection|Génération du PNG…|PNG généré|Échec de l’export. Réessayez.|Sélectionnez un morceau',
+  ko:'이미지 내보내기|전체 화면|현재 채보 카드|난이도 모음|난이도 선택|전체|해제|모음 내보내기|PNG 생성 중…|PNG 생성 완료|이미지 내보내기 실패. 다시 시도해 주세요.|곡을 먼저 선택해 주세요',
+  es:'Exportar imagen|Captura de página|Tarjeta actual|Colección de dificultades|Elegir dificultades|Todas|Borrar|Exportar colección|Generando PNG…|PNG generado|Error al exportar. Inténtalo de nuevo.|Selecciona una canción',
+  iu:'ᐊᔾᔨ ᑐᖅᑯᕐᓗᒍ|ᐊᔾᔨ|ᐃᓐᖏᐅᑎ|ᖁᑦᑎᓐᓂᖏᑦ|ᖁᑦᑎᓐᓂᖓ ᓂᕈᐊᕐᓗᒍ|ᑕᒪᒃᑭᖅᑐᑦ|ᐲᕐᓗᒋᑦ|ᐊᔾᔨ ᑐᖅᑯᕐᓗᒍ|PNG…|PNG ✓|ᐊᑐᐃᓐᓇᐅᙱᑦᑐᖅ|ᐃᓐᖏᐅᑎ ᓂᕈᐊᕐᓗᒍ'
+ };
+ for(const [code,row] of Object.entries(captureRows))row.split('|').forEach((value,i)=>dictionaries[code][captureKeys[i]]=value);
  const locale=()=>document.documentElement.lang==='zh-Hans'?'zh':document.documentElement.lang;
  const t=key=>dictionaries[locale()]?.[key] || dictionaries.en[key] || globalThis.QUALITHM_LOCALES?.[locale()]?.[key] || key;
  const functional={'All Songs':'allSongs',Favorites:'favorites',Level:'level',VARIETY:'varieties',Varieties:'varieties',Original:'original',WHIMSY:'whimsy'};
@@ -81,6 +94,7 @@
    const mode={pack:'packOrder',subgroup:'subgroups',flat_alpha:'titleOrder',level_asc:'ascending',level_desc:'descending'}[State.sortMode];
    if(sort){sort.title=`${t('sort')} · ${t(mode || 'subgroups')}`;sort.setAttribute('aria-label',sort.title);}
    tip('#themeToggle',document.body.dataset.theme==='dark'?'light':'dark');
+   tip('#exportScreenshot','screenshot');
    const previewStatus=document.getElementById('audioToggle')?.dataset.previewStatus;
    tip('#audioToggle',previewStatus==='PREVIEW UNAVAILABLE'?'previewFailed':previewStatus==='TAP TO PREVIEW'?'previewTap':Preview.externalOnly?'previewOfficial':!Preview.config.url?'previewMissing':Preview.muted?'previewUnmute':'previewMute');
    globalThis.QualithmText?.refresh();

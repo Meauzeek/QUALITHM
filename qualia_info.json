@@ -217,7 +217,7 @@
       "difficulties": {
         "MET": 15.5,
         "HYP": 16,
-        "HYP_cover": "https://is1-ssl.mzstatic.com/image/thumb/Music114/v4/c5/22/91/c5229155-e643-540c-bbfc-b257b17ceb38/4571164388946_cover.jpg/600x600bb.jpg",
+        "HYP_cover": "assets/jackets/tiamat-hyp.jpg",
         "WMS": "狂",
         "NUL": 7.5,
         "PHM": 11.8,
@@ -2415,7 +2415,7 @@
       "artist": "200 OK",
       "category": "Original",
       "subgroup": "",
-    "bpm": 200,
+      "bpm": 200,
       "coverUrl": "assets/jackets/selenophilia.png",
       "difficulties": {
         "NUL": 3,
@@ -2433,11 +2433,11 @@
     },
     {
       "id": "original-2enith-4fter-chroma",
-    "title": "2enith 4bove Chroma",
+      "title": "2enith 4bove Chroma",
       "artist": "xi feat. 燕檸 (vocal: 柚木つばめ)",
       "category": "Original",
       "subgroup": "",
-    "bpm": 242.4,
+      "bpm": 242.4,
       "coverUrl": "assets/jackets/2enith-4fter-chroma.png",
       "difficulties": {
         "NUL": 4,
